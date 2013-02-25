@@ -1,0 +1,17 @@
+WIP: NetSight is an extensible network diagnosis platform.
+
+Code organization:
+netsight/
+    netsight/
+        src/
+            compress/
+            topo_sort/
+            match/
+        doc/
+        test/
+    recorder/
+    apps/
+        ndb/
+        netwatch/
+        netshark/
+        nprof/
