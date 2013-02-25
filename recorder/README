@@ -1,0 +1,29 @@
+Dependencies
+============
+
+- OpenFaucet: ndb requires openfaucet python module that implements OF1.0
+  protocol using the Twisted framework.  
+$ git clone git@github.com:nikhilh/openfaucet.git
+$ cd openfaucet
+$ ./bootstrap.sh
+$ ./configure
+$ make
+$ sudo make install
+
+- Twisted:
+$ sudo aptitude install python-twisted
+
+- It is recommended that you also install pexpect for the
+  debug shell. Other dependencies like shlex, pydoc, bdb should be available by
+  default.
+$ sudo easy_install pexpect
+
+- MongoDB: mongodb, pymongo, bson
+$ sudo aptitude install mongodb
+$ sudo easy_install pymongo bson
+edit /etc/mongodb.conf to add the following lines:
+'''bind_ip = 0.0.0.0
+port = 27017
+noauth = true'''
+Starting/stopping mongodb:
+$ sudo service mongodb start/stop/restart
