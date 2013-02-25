@@ -9,7 +9,9 @@ PostcardList::insert(PostcardNode *p, PostcardNode *loc)
 {
     if(loc == NULL) {
         p->next = head;
-        p->next->prev = p;
+        if(p->next != NULL) {
+            p->next->prev = p;
+        }
         head = p;
         if(tail == NULL)
             tail = p;
@@ -25,6 +27,7 @@ PostcardList::insert(PostcardNode *p, PostcardNode *loc)
         p->next->prev = p;
         loc->next = p;
     }
+    length++;
 }
 
 PostcardNode*
@@ -44,6 +47,7 @@ PostcardList::remove(PostcardNode *p)
         tail = p->prev;
     }
     p->next = p->prev = NULL;
+    length--;
     return p;
 }
 
