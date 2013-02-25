@@ -51,15 +51,15 @@ struct PostcardNode {
     {
         u16 outport = 0;
         memcpy(&outport, &(pkt->eth.dst[3]), OUTPORT_TAG_LEN);
+        outport = ntohs(outport);
         return (int)outport;
     }
 
     int get_version()
     {
         u32 version = 0;
-        // we're big-endian, and so is the tag data
-        // so this naive copying is OK
         memcpy(&version, &(pkt->eth.dst[0]), VERSION_TAG_LEN);
+        version = ntohl(version);
         version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
         return (int)version;
     }
