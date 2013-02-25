@@ -165,9 +165,9 @@ class PacketHistoryFilter {
             memset(sub, 0, sizeof sub);
         }
 
-        int match(PostcardNode *packet_history)
+        int match(PostcardList &pl)
         {
-            return match_fn(prog, packet_history, sub, nelem(sub));
+            return match_fn(prog, pl.head, sub, nelem(sub));
         }
 };
 
