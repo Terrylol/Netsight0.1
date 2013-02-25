@@ -12,18 +12,19 @@ namespace tut
 {
     using namespace std;
 
-    struct data {
+    struct compress_data {
     };
     
-    typedef test_group<data> tg;
-    typedef tg::object testobject;
+    typedef test_group<compress_data> compress_tg;
+    typedef compress_tg::object compresstestobject;
 
-    tg compression_test_group("compression test");
+    compress_tg compression_test_group("compression test");
     
-    /*template<> 
+    /*
+    template<> 
     template<> 
     void 
-    testobject::test<1>()
+    compresstestobject::test<1>()
     { 
         set_test_name("hexify_byteify");
         for(int i = 0; i < nelem(sample_packets_hex); i++) {
@@ -39,7 +40,7 @@ namespace tut
     template<> 
     template<> 
     void 
-    testobject::test<2>()
+    compresstestobject::test<2>()
     { 
         set_test_name("compress_nocrash");
         Compressor c;
@@ -60,12 +61,12 @@ namespace tut
         printf("Uncompressed size: %lu\n", uncomp_size);
         printf("Compressed size: %lu\n", comp_size);
         ensure("compression", comp_size <= uncomp_size);
-    }*/
+    }
 
     template<> 
     template<> 
     void 
-    testobject::test<1>()
+    compresstestobject::test<3>()
     { 
         set_test_name("compress_decompress");
         Compressor c;
@@ -105,4 +106,5 @@ namespace tut
         }
         ensure("Packet num", num_decomp_packets == nelem(sample_packets_hex));
     }
+*/
 }
