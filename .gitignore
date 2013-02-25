@@ -1,0 +1,8 @@
+*.o
+*.pyc
+*.so
+*.os
+.sconsign.dblite
+netsight/src/filter/parse.tab.cc
+netsight/src/netsight
+netsight/test/test_netsight
