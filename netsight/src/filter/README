@@ -1,0 +1,60 @@
+
+RE1: modified to match "arrays of objects" instead of
+a string.  Essentially overloaded the == function :-)
+
+Dependencies:
+
+libcrafter: 
+Libcrafter is a high level library for C++ designed to facilitate the creation
+and decoding of network packets.
+https://github.com/pellegre/libcrafter
+
+Jansson:
+Jansson is a C library for encoding, decoding and manipulating JSON data.
+https://github.com/akheron/jansson
+
+A couple of things left to do:
+- Modularise and "class"-ify the whole thing in C++
+- Support negation in PF
+- Output machine code/LLVM like BPF
+- Layers of indirection
+  - Matching on massive sets: http://ipset.netfilter.org/
+- Limited backreferences
+- Support ^ $ and other stuff
+- Make parsing more robust
+
+This parser doesn't tolerate many common errors
+- There should be space between {{ and the rest of the PF
+  and between the PF and }}
+
+Note:
+- Spaces outside {{ and }} are ignored
+
+Other useful regex features.
+- Support other regex features such as counting
+  {{ PF }}{2}
+- Support regexes within PFs
+
+# Instructions:
+To read a hist archive file:
+ time ./re -r -i <infile>
+
+To write a hist archive file:
+ ./re -w -o <outfile> -n <num_histories> -c <chain_length>
+
+To generate the (paper-ready) microbenchmark plot:
+ time ./re -g -i hist/history-5GB -o data/re1.latsweep [-m <match_fn>]
+ (takes ~50min)
+ cd ..
+ python regex_match_chain_sweep.py -p --data_dir re1/data
+
+To generate (paper-ready) Clemson macrobenchmark plot:
+ time ./re -B -i ../../ndb/analysis/hist/clemson-1G.hist -o ../../ndb/analysis/data/clemson-1G-result.json
+ (takes ~5min30s)
+ cd ../../ndb/analysis
+ python plot_clemson_macrobenchmark.py data/clemson-1G-result.json
+
+To generate hist file from Clemson pcap:
+  cd ../../ndb/analysis
+  clemson_histories.py <pcap_infile> <hist_outfile>
+  (takes ~50mins to convert a 1GB pcap file to a hist file)

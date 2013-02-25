@@ -1,0 +1,3 @@
+env = Environment(CCFLAGS='-fPIC -Wall')
+env.SharedLibrary(target = 'bpfjit', source = ['bpf-edumazet.c',
+                    'bpf_jit_comp.c', 'bpf_jit.S'])

@@ -1,0 +1,23 @@
+env = Environment(CCFLAGS='-O9 -std=c++0x',
+                    CPPPATH=['include'])
+
+yacc = env.CFile("filter/parse.tab.cc", "filter/parse.y")
+
+root_files = ['netsight.cc', 'postcard_list.cc', 'postcard_worker.cc', 
+                'history_worker.cc', 'path_table.cc']
+compress_files = map(lambda x: 'compress/' + x, ['compress.cc', 'decompress.cc',
+                'util.cc'])
+filter_files = map(lambda x: 'filter/' + x, ['recursive.cc', 
+                            'compile.cc', 'sub.cc']) + [yacc[0]]
+sort_files = map(lambda x: 'topo_sort/' + x, ['topo_sort.cc']) 
+lib_files = map(lambda x: 'lib/' + x, ['flow.cc', 
+                            'packet.cc', 'helper.cc'])
+src_files = root_files + compress_files + filter_files + sort_files + lib_files
+
+lib_deps = ['bpfjit', 'pcap', 'pthread', 'z']
+
+env.Program(target='netsight', source=src_files,
+            LIBS=lib_deps, LIBPATH=['filter/bpf-linux'],
+            RPATH=['filter/bpf-linux'])
+
+SConscript(['filter/bpf-linux/SConscript'])
