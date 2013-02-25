@@ -60,6 +60,7 @@ struct PostcardNode {
         // we're big-endian, and so is the tag data
         // so this naive copying is OK
         memcpy(&version, &(pkt->eth.dst[0]), VERSION_TAG_LEN);
+        version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
         return (int)version;
     }
 };
