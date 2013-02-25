@@ -1,0 +1,2 @@
+SConscript(['netsight/SConscript'])
+
