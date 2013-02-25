@@ -1,0 +1,20 @@
+env = Environment(CCFLAGS='-O9 -std=c++0x',
+                    CPPPATH=['.', '#netsight/src/include', '#netsight/src'])
+
+# use only object files so that they're compiled only once
+# TODO: Consider building static libraries for each of these modules
+compress_files = map(lambda x: '#netsight/src/compress/' + x, 
+                    ['compress.o', 'decompress.o', 'util.o'])
+filter_files = map(lambda x: '#netsight/src/filter/' + x, 
+                    ['recursive.o', 'compile.o', 'sub.o', 'parse.tab.o'])
+sort_files = map(lambda x: '#netsight/src/topo_sort/' + x, ['topo_sort.o']) 
+lib_files = map(lambda x: '#netsight/src/lib/' + x, 
+                    ['flow.o', 'packet.o', 'helper.o'])
+
+src_files = ['main.cc', 'test_compress.cc'] + compress_files + filter_files + sort_files + lib_files
+                
+lib_deps = ['bpfjit', 'pcap', 'pthread', 'z']
+
+env.Program(target='test_netsight', source=src_files,
+            LIBS=lib_deps, LIBPATH=['#netsight/src/filter/bpf-linux'],
+            RPATH=[Dir('#').path + '/netsight/src/filter/bpf-linux'])
