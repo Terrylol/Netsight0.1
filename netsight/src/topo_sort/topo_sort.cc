@@ -9,9 +9,8 @@
 using namespace std;
 
 void
-Topology::read_topo(const char *filename)
+Topology::read_topo(istream &in)
 {
-
     /*
     Topo json format:
     {
@@ -39,30 +38,31 @@ Topology::read_topo(const char *filename)
     }
     */
 
-    ifstream in_f(filename, ios::in | ios::binary);
     picojson::value v, topo_j, nodes_j, links_j;
 
-    string err = picojson::parse(v, in_f);
+    string err = picojson::parse(v, in);
+
     topo_j = v.get("topo");
     nodes_j = topo_j.get("nodes");
     links_j = topo_j.get("links");
     
-    picojson::array nodes_list = nodes_j.get<picojson::array>();
+    picojson::array &nodes_list = nodes_j.get<picojson::array>();
     for (picojson::array::iterator iter = nodes_list.begin(); iter != nodes_list.end(); ++iter) {
-        int dpid = (*iter).get("dpid").get<ull>();
+        //NOTE: For some weird reason, picojson reads int values in the json
+        //string as double
+        int dpid = (int) (*iter).get("dpid").get<double>();
         g[dpid] = unordered_map<int, int>();
     }
 
     picojson::array links_list = links_j.get<picojson::array>();
     for (picojson::array::iterator iter = links_list.begin(); iter != links_list.end(); ++iter) {
-        ull src_dpid = (*iter).get("src_dpid").get<ull>();
-        ull src_port = (*iter).get("src_port").get<ull>();
-        ull dst_dpid = (*iter).get("dst_dpid").get<ull>();
-        ull dst_port = (*iter).get("dst_port").get<ull>();
+        u64 src_dpid = (u64) (*iter).get("src_dpid").get<double>();
+        u64 src_port = (u64) (*iter).get("src_port").get<double>();
+        u64 dst_dpid = (u64) (*iter).get("dst_dpid").get<double>();
+        u64 dst_port = (u64) (*iter).get("dst_port").get<double>();
         set_neighbor(src_dpid, src_port, dst_dpid);
         set_neighbor(dst_dpid, dst_port, src_dpid);
     }
-
 }
 
 void 
@@ -78,18 +78,21 @@ topo_sort(PostcardList *pl, Topology &topo)
             assert(false);
         }
         locs[curr->dpid] = curr;
-        curr = curr->next;
+        PostcardNode *next = curr->next;
+        curr->next = curr->prev = NULL; //reset the pointers
+        curr = next;
     }
 
-    int i = 0;
     EACH(it, locs) {
         PostcardNode *curr = it->second;
+        assert(curr->dpid == it->first);
         int nbr = topo.get_neighbor(curr->dpid, curr->outport);
-        if(nbr) {
+        printf("Checking neighbor of %d:\n", curr->dpid);
+        if((nbr > 0) && (locs.find(nbr) != locs.end())) {
             PostcardNode *nxt = locs[nbr];
+            printf("%d--%d\n", curr->dpid, nxt->dpid);
             curr->next = nxt;
-            if (nxt)
-                nxt->prev = curr;
+            nxt->prev = curr;
         }
     }
 

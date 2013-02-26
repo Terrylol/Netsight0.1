@@ -27,9 +27,9 @@ class Topology {
         {
             g[dpid][outport] = nbr;
         }
-        void read_topo(const char *filename);
+        void read_topo(istream &in);
 };
 
-void topo_sort(PostcardList *pl, const Topology &topo);
+void topo_sort(PostcardList *pl, Topology &topo);
 
 #endif
