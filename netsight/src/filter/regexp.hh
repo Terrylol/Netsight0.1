@@ -140,7 +140,7 @@ class PacketHistoryFilter {
     public:
         PacketHistoryFilter(const char *regex_)
         {
-            memcpy(regex, regex_, strlen(regex_));
+            strcpy(regex, regex_);
             match_fn = recursiveloopprog;
             if(regex == NULL)
                 return;
@@ -154,7 +154,13 @@ class PacketHistoryFilter {
             re = phf.re;
             prog = phf.prog;
             memcpy(sub, phf.sub, sizeof(PostcardNode*) * MAXSUB);
-            memcpy(regex, phf.regex, strlen(phf.regex));
+            strcpy(regex, phf.regex);
+        }
+
+        ~PacketHistoryFilter()
+        {
+            if(prog)
+                free(prog);
         }
 
         void compile_(char *regex)
@@ -163,6 +169,7 @@ class PacketHistoryFilter {
             parse_postcard_filters(re);
             prog = compile(re);
             memset(sub, 0, sizeof sub);
+            //printprog(prog);
         }
 
         int match(PostcardList &pl)

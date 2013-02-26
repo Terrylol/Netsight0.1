@@ -173,8 +173,9 @@ parse(char *s)
 	input = s;
 	parsed_regexp = (Regexp *)nil;
 	nparen = 0;
-	if(yyparse() != 1)
+	if(yyparse() != 1) {
 		yyerror("did not parse");
+        }
 	if(parsed_regexp == nil)
 		yyerror("parser nil");
 
@@ -211,11 +212,11 @@ reg(int type, Regexp *left, Regexp *right)
 void
 printre(Regexp *r)
 {
-	switch(r->type) {
-	default:
-		printf("???");
-		break;
+        if(!r) {
+            return;
+        }
 
+	switch(r->type) {
 	case Alt:
 		printf("Alt(");
 		printre(r->left);
@@ -269,6 +270,10 @@ printre(Regexp *r)
 		printre(r->left);
 		printf(")");
 		break;
+
+	default:
+		printf("???");
+		break;
 	}
 }
 
@@ -304,10 +309,10 @@ parse_postcard_filter(Regexp *r)
 		arg = argv[argc];
 	}
 
-
 	r->pfexp = (PostcardFilter *)mal(sizeof (struct PostcardFilter));
 	r->pfexp->dpid = -1;
 	r->pfexp->inport = -1;
+	r->pfexp->outport = -1;
 	r->pfexp->bpf = -1;
 	r->pfexp->version = -1;
 
@@ -337,6 +342,9 @@ parse_postcard_filter(Regexp *r)
 			i += 2;
 		} else if (strcmp(argv[i], "--inport") == 0) {
 			r->pfexp->inport = atoi(argv[i+1]);
+			i += 2;
+		} else if (strcmp(argv[i], "--outport") == 0) {
+			r->pfexp->outport = atoi(argv[i+1]);
 			i += 2;
 		} else if (strcmp(argv[i], "--version") == 0) {
 			r->pfexp->version = atoi(argv[i+1]);

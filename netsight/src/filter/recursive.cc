@@ -5,6 +5,9 @@
 #include "regexp.hh"
 
 int match(PostcardNode *sp, PostcardFilter *pf) {
+    if(eo_postcard(sp))
+        return 0;
+
         struct sk_buff skbuff;
         skbuff.len = sp->pkt->caplen;
         skbuff.data_len = sp->pkt->caplen;
