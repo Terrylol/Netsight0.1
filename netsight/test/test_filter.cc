@@ -64,7 +64,7 @@ namespace tut
 
     struct filter_data {
         int chain_len;
-        char rr[255];
+        char regex_str[255];
         PostcardList *pl;
         filter_data()
         {
@@ -88,8 +88,8 @@ namespace tut
     filtertestobject::test<1>()
     {
         set_test_name("match: .*");
-        sprintf(rr, ".*");
-        PacketHistoryFilter phf(rr);
+        sprintf(regex_str, ".*");
+        PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("match", m > 0);
     }
@@ -99,8 +99,8 @@ namespace tut
     filtertestobject::test<2>()
     {
         set_test_name("match: .*X");
-        sprintf(rr, ".*{{ --bpf ip --dpid %d --outport 1 }}", chain_len);
-        PacketHistoryFilter phf(rr);
+        sprintf(regex_str, ".*{{ --bpf ip --dpid %d --outport 1 }}", chain_len);
+        PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("match", m > 0);
     }
@@ -111,8 +111,8 @@ namespace tut
     {
         set_test_name("non-match: .*X");
         PostcardList *pl = gen_chain_pcards(chain_len);
-        sprintf(rr, ".*{{ --bpf ip --dpid %d }}", chain_len+1);
-        PacketHistoryFilter phf(rr);
+        sprintf(regex_str, ".*{{ --bpf ip --dpid %d }}", chain_len+1);
+        PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("non-match", m == 0);
     }
@@ -122,8 +122,8 @@ namespace tut
     filtertestobject::test<4>()
     {
         set_test_name("match: X.*X");
-        sprintf(rr, "{{ --bpf ip --dpid 1 }}.*{{ --bpf ip --dpid %d }}", chain_len);
-        PacketHistoryFilter phf(rr);
+        sprintf(regex_str, "{{ --bpf ip --dpid 1 }}.*{{ --bpf ip --dpid %d }}", chain_len);
+        PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("match", m > 0);
     }
@@ -133,8 +133,8 @@ namespace tut
     filtertestobject::test<5>()
     {
         set_test_name("match: X.*X.*X");
-        sprintf(rr, "{{ --bpf ip --dpid 1 }}.*{{ --bpf ip --dpid %d }}.*{{ --bpf ip --dpid %d }}", chain_len/2, chain_len);
-        PacketHistoryFilter phf(rr);
+        sprintf(regex_str, "{{ --bpf ip --dpid 1 }}.*{{ --bpf ip --dpid %d }}.*{{ --bpf ip --dpid %d }}", chain_len/2, chain_len);
+        PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("match", m > 0);
     }
