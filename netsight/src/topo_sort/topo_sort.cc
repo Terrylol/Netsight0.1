@@ -102,6 +102,7 @@ topo_sort(PostcardList *pl, Topology &topo)
     if(tails.empty())
         return;
 
+    //string together the segments
     pl->tail = tails[tails.size()-1];
     for(int i = tails.size()-1; i >= 0; i--) {
         PostcardNode *curr = tails[i];
@@ -115,12 +116,5 @@ topo_sort(PostcardList *pl, Topology &topo)
             pl->head = curr;
         }
     }
-
-    /*EACH(it, locs) {
-        if (it->second->prev == NULL)
-            pl->head = it->second;
-        if (it->second->next == NULL)
-            pl->tail = it->second;
-    }*/
 }
 
