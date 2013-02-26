@@ -9,14 +9,12 @@ filter_files = map(lambda x: '#netsight/src/filter/' + x,
                     ['recursive.o', 'compile.o', 'sub.o', 'parse.tab.o'])
 sort_files = map(lambda x: '#netsight/src/topo_sort/' + x, ['topo_sort.o']) 
 lib_files = map(lambda x: '#netsight/src/lib/' + x, 
-                    ['flow.o', 'packet.o', 'helper.o'])
-netsight_files = map(lambda x: '#netsight/src/' + x, 
-                    ['postcard_list.o'])
+                    ['flow.o', 'packet.o', 'postcard.o', 'helper.o'])
 test_files = ['main.cc', 'test_compress.cc', 'test_filter.cc', 'test_sort.cc',
 'test_util.cc']
 
 src_files =  test_files + compress_files + filter_files + \
-                sort_files + lib_files + netsight_files
+                sort_files + lib_files 
                     
                 
 lib_deps = ['bpfjit', 'crafter', 'pcap', 'pthread', 'z']

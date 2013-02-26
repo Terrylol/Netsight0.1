@@ -13,7 +13,7 @@
 #include <pcap.h>
 #include "bpf-linux/bpf-jit-linux.h"
 #include "helper.hh"
-#include "../netsight.hh"
+#include "postcard.hh"
 
 #define MAX_REGEX_SIZE 50000
 #define MAX_PF_SIZE 25500

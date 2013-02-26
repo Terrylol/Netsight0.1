@@ -8,7 +8,7 @@
 #include "packet.hh"
 #include "picojson.h"
 #include "helper.hh"
-#include "../netsight.hh"
+#include "postcard.hh"
 
 using namespace std;
 

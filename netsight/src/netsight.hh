@@ -1,95 +1,70 @@
 #ifndef NETSIGHT_HH
 #define NETSIGHT_HH
 
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <csignal>
+
+#include <pcap.h>
+#include <pthread.h>
+
 #include "packet.hh"
+#include "postcard.hh"
+#include "path_table.hh"
+#include "flow.hh"
+#include "types.hh"
+
+#include "filter/regexp.hh"
 
 #define ROUND_LENGTH 1000 //round length in ms
 
-#define DPID_TAG_LEN 1
-#define OUTPORT_TAG_LEN 2
-#define VERSION_TAG_LEN 3
-
 using namespace std;
 
-/* Type declarations */
-struct PostcardNode;
-class PostcardList;
+class NetSight {
+    private:
 
-/* Type definitions */
+        vector<string> regexes;
+        vector<PacketHistoryFilter> filters;
+        PostcardList stage;
+        PathTable path_table;
+        pthread_mutex_t stage_lock;
+        pthread_cond_t round_cond;
+        pthread_t postcard_t;
+        pthread_t history_t;
 
-/* 
- * A PostcardList is essentially a doubly linked list of PostcardNodes
- * It's the caller's responsibility to allocate/deallocate memory for the Postcards
- * except in clear()
- * */
-struct PostcardNode {
-    PostcardNode *prev;
-    PostcardNode *next;
-    Packet *pkt;
-    int dpid;
-    int inport;
-    int outport;
-    int version;
-    PostcardNode(Packet *p)
-    {
-        prev = next = NULL;
-        pkt = p;
-        dpid = get_dpid();
-        inport = -1;
-        outport = get_outport();
-        version = get_version();
-    }
+        /* NetSight is a singleton class*/
+        NetSight();
+        NetSight(NetSight const&); // Don't Implement
+        void operator=(NetSight const&); // Don't implement
 
-    int get_dpid()
-    {
-        u8 dpid = 0; 
-        memcpy(&dpid, &(pkt->eth.dst[5]), DPID_TAG_LEN);
-        return (int)dpid;
-    }
-
-    int get_outport()
-    {
-        u16 outport = 0;
-        memcpy(&outport, &(pkt->eth.dst[3]), OUTPORT_TAG_LEN);
-        outport = ntohs(outport);
-        return (int)outport;
-    }
-
-    int get_version()
-    {
-        u32 version = 0;
-        memcpy(&version, &(pkt->eth.dst[0]), VERSION_TAG_LEN);
-        version = ntohl(version);
-        version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
-        return (int)version;
-    }
-    void print()
-    {
-        printf("{dpid: %d, inport: %d, outport: %d, version: %d}", dpid, inport, outport, version);
-    }
-};
-
-struct PostcardList {
-        PostcardNode *head;
-        PostcardNode *tail;
-        int length;
-        PostcardList()
+        /* static thread and signal handler functions */
+        static void sig_handler(int signum);
+        static void *postcard_worker(void *args)
         {
-            head = tail = NULL;
-            length = 0;
+            NetSight &n = NetSight::get_instance();
+            return n.run_postcard_worker(args);
         }
-        void insert(PostcardNode *p, PostcardNode *loc);
-        PostcardNode *remove(PostcardNode *p);
-        void push_back(PostcardNode *p)
-        { insert(p, tail); }
-        void push_front(PostcardNode *p)
-        { insert(p, NULL); }
-        void clear();
-        void print();
-};
 
-/* Function declarations */
-void *run_postcard_worker(void *args);
-void *run_history_worker(void *args);
+        static void *history_worker(void *args)
+        {
+            NetSight &n = NetSight::get_instance();
+            return n.run_history_worker(args);
+        }
+
+        void sniff_pkts(const char *dev);
+        void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
+        void *run_postcard_worker(void *args);
+        void *run_history_worker(void *args);
+
+    public:
+        static NetSight &get_instance()
+        {
+            static NetSight n;
+            return n;
+        }
+
+        void interact();
+};
 
 #endif //NETSIGHT_HH

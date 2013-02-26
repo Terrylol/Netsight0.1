@@ -1,4 +1,5 @@
-#include "netsight.hh"
+#include <cstdio>
+#include "postcard.hh"
 
 /*
  * insert p after loc

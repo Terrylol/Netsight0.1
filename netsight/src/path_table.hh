@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 #include "types.hh"
+#include "postcard.hh"
 #include "flow.hh"
-#include "netsight.hh"
 
 using namespace std;
 

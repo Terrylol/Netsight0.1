@@ -1,7 +1,9 @@
 #include <cstdint>
 
+#include "postcard.hh"
 #include "path_table.hh"
-#include "netsight.hh"
+#include "packet.hh"
+#include "flow.hh"
 
 void 
 PathTable::insert_postcard(PostcardNode *p)
