@@ -83,24 +83,44 @@ topo_sort(PostcardList *pl, Topology &topo)
         curr = next;
     }
 
+    vector<PostcardNode *> tails;
+
     EACH(it, locs) {
         PostcardNode *curr = it->second;
         assert(curr->dpid == it->first);
         int nbr = topo.get_neighbor(curr->dpid, curr->outport);
-        printf("Checking neighbor of %d:\n", curr->dpid);
         if((nbr > 0) && (locs.find(nbr) != locs.end())) {
             PostcardNode *nxt = locs[nbr];
-            printf("%d--%d\n", curr->dpid, nxt->dpid);
             curr->next = nxt;
             nxt->prev = curr;
         }
+        else {
+            tails.push_back(curr);
+        }
     }
 
-    EACH(it, locs) {
+    if(tails.empty())
+        return;
+
+    pl->tail = tails[tails.size()-1];
+    for(int i = tails.size()-1; i >= 0; i--) {
+        PostcardNode *curr = tails[i];
+        while(curr->prev)
+            curr = curr->prev;
+        if(i > 0) {
+            curr->prev = (tails[i-1]);
+            (tails[i-1])->next = curr;
+        }
+        else {
+            pl->head = curr;
+        }
+    }
+
+    /*EACH(it, locs) {
         if (it->second->prev == NULL)
             pl->head = it->second;
         if (it->second->next == NULL)
             pl->tail = it->second;
-    }
+    }*/
 }
 

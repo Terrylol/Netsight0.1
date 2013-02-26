@@ -36,16 +36,14 @@ namespace tut
         make_chain_topo(chain_len, ss);
         t.read_topo(ss);
         pl = gen_chain_pcards(chain_len);
-        printf("Chain PostcardList:\n");
-        pl->print();
         shuffle(pl);
-        printf("Shuffled Chain PostcardList:\n");
-        pl->print();
-        ensure("postcard list length sanity", pl->length == chain_len);
         topo_sort(pl, t);
         ensure("postcard list length sanity", pl->length == chain_len);
-        printf("Sorted Chain PostcardList:\n");
-        pl->print();
+        PostcardNode *curr = pl->head;
+        while(curr && curr->next) {
+            ensure("dpid ordering", curr->dpid = curr->next->dpid - 1);
+            curr = curr->next;
+        }
     }
 
     template<> template<>
@@ -53,6 +51,22 @@ namespace tut
     sorttestobject::test<2>()
     {
         set_test_name("sort: incomplete packet history");
+        int chain_len = 10;
+        stringstream ss(stringstream::in | stringstream::out); 
+        make_chain_topo(chain_len, ss);
+        t.read_topo(ss);
+        pl = gen_chain_pcards(chain_len);
+        shuffle(pl);
+        pl->remove(pl->head);
+        topo_sort(pl, t);
+
+        int new_len = 0;
+        PostcardNode *pn = pl->head;
+        while(pn) {
+            new_len++;
+            pn = pn->next;
+        }
+        ensure("postcard list length sanity", new_len == chain_len-1);
     }
 
     template<> template<>

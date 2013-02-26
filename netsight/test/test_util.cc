@@ -86,7 +86,6 @@ make_chain_topo(int chain_len, stringstream &ss)
     v["topo"] = V(topo);
 
     ss << V(v).serialize();
-    cout << ss.str() << endl;
 }
 
 void shuffle(PostcardList *pl)
