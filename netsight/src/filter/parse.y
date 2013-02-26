@@ -210,6 +210,16 @@ reg(int type, Regexp *left, Regexp *right)
 }
 
 void
+free_reg(Regexp *r)
+{
+    if(r == nil)
+        return;
+    free_reg(r->left);
+    free_reg(r->right);
+    free(r);
+}
+
+void
 printre(Regexp *r)
 {
         if(r == nil) {

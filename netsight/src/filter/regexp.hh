@@ -53,6 +53,7 @@ enum	/* Regexp.type */
 
 Regexp *parse(char*);
 Regexp *reg(int type, Regexp *left, Regexp *right);
+void free_reg(Regexp *reg);
 void printre(Regexp*);
 void fatal(const char*, ...);
 void *mal(int);
@@ -159,6 +160,7 @@ class PacketHistoryFilter {
 
         ~PacketHistoryFilter()
         {
+            free_reg(re);
             if(prog)
                 free(prog);
         }
