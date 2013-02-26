@@ -18,7 +18,7 @@ namespace tut
     typedef test_group<compress_data> compress_tg;
     typedef compress_tg::object compresstestobject;
 
-    compress_tg compression_test_group("compression test");
+    compress_tg compression_test_group("compress test");
     
     /*
     template<> 
