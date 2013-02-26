@@ -27,8 +27,8 @@ int compile_to_x86(struct bpf_program *prog, struct sk_filter *filter) {
 	}
 
 	ret = bpf_jit_compile(filter);
-	printf("bpf_jit_compile returned %d: %p, %d bytes of code.\n",
-	       ret, filter->bpf_func, filter->bpf_size);
+	//printf("bpf_jit_compile returned %d: %p, %d bytes of code.\n",
+	//       ret, filter->bpf_func, filter->bpf_size);
     return filter->bpf_size;
 }
 

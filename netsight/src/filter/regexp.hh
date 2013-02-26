@@ -169,6 +169,7 @@ class PacketHistoryFilter {
             parse_postcard_filters(re);
             prog = compile(re);
             memset(sub, 0, sizeof sub);
+            //printre(re);
             //printprog(prog);
         }
 

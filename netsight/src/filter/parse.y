@@ -212,7 +212,7 @@ reg(int type, Regexp *left, Regexp *right)
 void
 printre(Regexp *r)
 {
-        if(!r) {
+        if(r == nil) {
             return;
         }
 
