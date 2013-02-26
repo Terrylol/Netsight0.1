@@ -63,6 +63,10 @@ struct PostcardNode {
         version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
         return (int)version;
     }
+    void print()
+    {
+        printf("{dpid: %d, inport: %d, outport: %d, version: %d}", dpid, inport, outport, version);
+    }
 };
 
 struct PostcardList {
@@ -81,6 +85,7 @@ struct PostcardList {
         void push_front(PostcardNode *p)
         { insert(p, NULL); }
         void clear();
+        void print();
 };
 
 /* Function declarations */

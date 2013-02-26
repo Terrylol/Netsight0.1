@@ -64,3 +64,16 @@ PostcardList::clear()
     head = tail = NULL;
     length = 0;
 }
+
+void 
+PostcardList::print()
+{
+    PostcardNode *pn = head;
+    while(pn) {
+        pn->print();
+        pn = pn->next;
+        if(pn)
+            printf(" -> ");
+    }
+    printf("\n");
+}
