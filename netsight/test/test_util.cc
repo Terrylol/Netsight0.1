@@ -14,7 +14,7 @@ PostcardList *gen_chain_pcards(int chain_len)
         int outport = 1;
         int version = 1;
         char tag[18];
-        sprintf(tag, "00:00:%02d:00:%02d:%02d", version, outport, dpid);
+        sprintf(tag, "00:00:%02x:00:%02x:%02x", version, outport, dpid);
         //printf("version %d, outport %d, dpid %d, tag \"%s\"\n", version, outport, dpid, tag);
 
         /* Create an ethernet header */
