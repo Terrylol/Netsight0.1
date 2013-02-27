@@ -3,6 +3,7 @@
 *.pyc
 *.so
 *.os
+*.a
 .sconsign.dblite
 netsight/src/filter/parse.tab.cc
 netsight/src/netsight
