@@ -1,0 +1,12 @@
+env = Environment(CCFLAGS='-O9 -std=c++0x',
+                    CPPPATH=['#netsight/src/include'])
+
+yacc = env.CFile('parse.tab.cc', 'parse.y')
+src_files = ['recursive.cc', 'compile.cc', 'sub.cc'] + [yacc[0]]
+lib_deps = ['netsightlib', 'bpfjit', 'pcap']
+lib_paths = ['#netsight/src/lib', 'bpf-linux']
+
+env.StaticLibrary(target='filter', source=src_files, 
+                    LIBS=lib_deps, LIBPATH=lib_paths)
+
+SConscript(['bpf-linux/SConscript'])
