@@ -66,10 +66,7 @@ NetSight::run_postcard_worker(void *args)
     sact.sa_handler = NetSight::sig_handler;
     sigaction(SIGALRM, &sact, NULL);
 
-    /* Start packet capture */
-    // TODO: take dev as input
-    const char *dev = DEVICE;
-    sniff_pkts(dev);
+    sniff_pkts(sniff_dev.c_str());
 }
 
 void*

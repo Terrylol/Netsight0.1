@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <fstream>
 #include <csignal>
 
 #include <pcap.h>
@@ -16,6 +17,7 @@
 #include "types.hh"
 
 #include "filter/regexp.hh"
+#include "topo_sort/topo_sort.hh"
 
 #define ROUND_LENGTH 1000 //round length in ms
 
@@ -23,6 +25,9 @@ using namespace std;
 
 class NetSight {
     private:
+        string sniff_dev;
+        string topo_filename;
+        Topology topo;
 
         vector<string> regexes;
         vector<PacketHistoryFilter> filters;
@@ -65,6 +70,17 @@ class NetSight {
         }
 
         void interact();
+        void set_sniff_dev(string s)
+        { 
+            sniff_dev = s;
+        }
+
+        void set_topo_filename(string s)
+        {
+            topo_filename = s;
+            fstream fs(topo_filename.c_str(), ios::in);
+            topo.read_topo(fs);
+        }
 };
 
 #endif //NETSIGHT_HH
