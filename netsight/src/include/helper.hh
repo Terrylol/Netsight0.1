@@ -55,10 +55,8 @@ static void debug(const char *location, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
-    printf(ANSI_COLOR_RED);
-    printf("%s: ", location);
-    vprintf(msg, args);
-    printf(ANSI_COLOR_RESET);
+    printf(ANSI_COLOR_RED "%s: " ANSI_COLOR_RESET, location);
+    printf(msg, args);
     va_end (args);
 }
 
