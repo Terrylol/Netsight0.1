@@ -29,6 +29,9 @@ class NetSight {
         string topo_filename;
         Topology topo;
 
+        struct bpf_program postcard_fp;  /* compiled filter program (expression) */
+        pcap_t *postcard_handle;         /* packet capture handle */
+
         vector<string> regexes;
         vector<PacketHistoryFilter> filters;
         PostcardList stage;
@@ -45,22 +48,17 @@ class NetSight {
 
         /* static thread and signal handler functions */
         static void sig_handler(int signum);
-        static void *postcard_worker(void *args)
-        {
-            NetSight &n = NetSight::get_instance();
-            return n.run_postcard_worker(args);
-        }
+        void cleanup();
 
-        static void *history_worker(void *args)
-        {
-            NetSight &n = NetSight::get_instance();
-            return n.run_history_worker(args);
-        }
+        static void *postcard_worker(void *args);
+        void *run_postcard_worker(void *args);
+
+        static void *history_worker(void *args);
+        void *run_history_worker(void *args);
 
         void sniff_pkts(const char *dev);
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
-        void *run_postcard_worker(void *args);
-        void *run_history_worker(void *args);
+
 
     public:
         static NetSight &get_instance()
