@@ -32,6 +32,10 @@ class NetSight {
         struct bpf_program postcard_fp;  /* compiled filter program (expression) */
         pcap_t *postcard_handle;         /* packet capture handle */
 
+        /* Signals that are handled by various threads */
+        sigset_t sigset;
+        pthread_t sig_handler_t;
+
         vector<string> regexes;
         vector<PacketHistoryFilter> filters;
         PostcardList stage;
@@ -46,28 +50,30 @@ class NetSight {
         NetSight(NetSight const&); // Don't Implement
         void operator=(NetSight const&); // Don't implement
 
-        /* static thread and signal handler functions */
-        static void sig_handler(int signum);
-        void cleanup();
+        /* signal handler thread */
+        static void *sig_handler(void *args);
 
+        /* postcard worker thread */
         static void *postcard_worker(void *args);
         void *run_postcard_worker(void *args);
 
+        /* history worker thread */
         static void *history_worker(void *args);
         void *run_history_worker(void *args);
 
         void sniff_pkts(const char *dev);
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
-
+        void cleanup();
+        void interact();
 
     public:
+        void start();
         static NetSight &get_instance()
         {
             static NetSight n;
             return n;
         }
 
-        void interact();
         void set_sniff_dev(string s)
         { 
             sniff_dev = s;

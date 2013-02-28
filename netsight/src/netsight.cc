@@ -23,32 +23,28 @@ NetSight::NetSight()
     pthread_mutex_init(&stage_lock, NULL);
     pthread_cond_init(&round_cond, NULL);
 
-    /* set of signals that the main thread should handle*/
-    sigset_t set;
-    sigemptyset(&set);
-    sigaddset(&set, SIGINT);
-    sigaddset(&set, SIGALRM);
+    /* set of signals that the signal handler thread should handle*/
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGINT);
+    sigaddset(&sigset, SIGALRM);
+}
 
+void
+NetSight::start()
+{
     /* block out these signals 
      * any newly created threads will inherit this signal mask
      * */
-    sigprocmask(SIG_BLOCK, &set, NULL);
+    pthread_sigmask(SIG_BLOCK, &sigset, NULL);
 
     /* Start postcard_worker thread */
-    pthread_create(&postcard_t, NULL, &NetSight::postcard_worker, this);
+    pthread_create(&postcard_t, NULL, &NetSight::postcard_worker, NULL);
 
     /* Start history worker thread */
-    pthread_create(&history_t, NULL, &NetSight::history_worker, this);
+    pthread_create(&history_t, NULL, &NetSight::history_worker, NULL);
 
-    /* unblock these signals so the main thread can handle it*/
-    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
-
-    /* Setup round signal handler */
-    struct sigaction sact;
-    sigemptyset(&sact.sa_mask);
-    sact.sa_flags = 0;
-    sact.sa_handler = NetSight::sig_handler;
-    sigaction(SIGALRM, &sact, NULL);
+    /* create a signal handler thread*/
+    pthread_create (&sig_handler_t, NULL, &NetSight::sig_handler, NULL);
 
     /* Start round timers */
     struct itimerval round_timer;
@@ -58,19 +54,28 @@ NetSight::NetSight()
     round_timer.it_value.tv_sec = (int) (ROUND_LENGTH/1000);
     setitimer (ITIMER_REAL, &round_timer, NULL);
 
+    interact();
 }
 
 void
 NetSight::interact()
 {
-    string input;
+    cout << "Enter a PHF to add or \"exit\" to exit.";
     while(true)
     {
-        cout << "Enter a PHF to add or \"exit\" to exit.";
         cout << ">>";
-        cin >> input;
-        if(input == "exit")
-            return;
+        string input;
+        cin.clear();
+        cin.sync();
+        if (!getline(cin, input))
+            fprintf(stderr, "Error: Reading user input\n");
+        DBG(AT, "Got input\n");
+        if(input == "exit") {
+            cleanup();
+            exit(EXIT_SUCCESS);
+        }
+        else if(input == "")
+            continue;
         regexes.push_back(input);
         filters.push_back(PacketHistoryFilter(input.c_str()));
     }
@@ -79,6 +84,7 @@ NetSight::interact()
 void *
 NetSight::postcard_worker(void *args)
 {
+
     NetSight &n = NetSight::get_instance();
     return n.run_postcard_worker(args);
 }
@@ -104,7 +110,7 @@ NetSight::run_history_worker(void *args)
         pthread_mutex_lock(&stage_lock);
         pthread_cond_wait(&round_cond, &stage_lock);
 
-        printf("----------------- ROUND COMPLETE ------------------\n\n");
+        DBG(AT, "----------------- ROUND COMPLETE ------------------\n\n");
 
         // Empty stage and populate path_table
         PostcardNode *pn = stage.head;
@@ -152,14 +158,12 @@ NetSight::sniff_pkts(const char *dev)
     postcard_handle = pcap_open_live(dev, SNAP_LEN, 1, 100, errbuf);
     if (postcard_handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-        //exit(EXIT_FAILURE);
         return;
     }
 
     /* make sure we're capturing on an Ethernet device [2] */
     if (pcap_datalink(postcard_handle) != DLT_EN10MB) {
         fprintf(stderr, "%s is not an Ethernet\n", dev);
-        //exit(EXIT_FAILURE);
         return;
     }
 
@@ -167,7 +171,6 @@ NetSight::sniff_pkts(const char *dev)
     if (pcap_compile(postcard_handle, &postcard_fp, filter_exp, 0, net) == -1) {
         fprintf(stderr, "Couldn't parse filter %s: %s\n",
                 filter_exp, pcap_geterr(postcard_handle));
-        //exit(EXIT_FAILURE);
         return;
     }
 
@@ -175,7 +178,6 @@ NetSight::sniff_pkts(const char *dev)
     if (pcap_setfilter(postcard_handle, &postcard_fp) == -1) {
         fprintf(stderr, "Couldn't install filter %s: %s\n",
                 filter_exp, pcap_geterr(postcard_handle));
-        //exit(EXIT_FAILURE);
         return;
     }
 
@@ -191,13 +193,18 @@ NetSight::sniff_pkts(const char *dev)
 void
 NetSight::cleanup()
 {
-    NetSight &n = NetSight::get_instance();
     /* cleanup */
-    pcap_freecode(&n.postcard_fp);
-    if(n.postcard_handle)
-        pcap_close(n.postcard_handle);
+    void* ret = NULL;
+    pthread_cancel(postcard_t);
+    pthread_cancel(history_t);
+    pthread_join(postcard_t, &ret);
+    pthread_join(history_t, &ret);
 
-    printf("\nCleanup complete.\n");
+    pcap_freecode(&postcard_fp);
+    if(postcard_handle)
+        pcap_close(postcard_handle);
+
+    DBG(AT, "\nCleanup complete.\n");
 }
 
 /*
@@ -216,25 +223,34 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
     pthread_mutex_unlock(&stage_lock);
 }
 
-void 
-NetSight::sig_handler(int signum)
+void *
+NetSight::sig_handler(void *args)
 {
+    int signum;
+    int rc; /* returned code       */
     NetSight &n = NetSight::get_instance();
-    void* ret = NULL;
-    switch(signum) {
-        case SIGALRM:
-            // signal round_cond
-            pthread_cond_signal(&n.round_cond);
-            break;
-        case SIGINT:
-            pthread_cancel(n.postcard_t);
-            pthread_cancel(n.history_t);
-            pthread_join(n.postcard_t, &ret);
-            pthread_join(n.history_t, &ret);
-            n.cleanup();
-            break;
-        default:
-            printf("Unknown signal %d\n", signum);
+
+    while(true) {
+        rc = sigwait (&n.sigset, &signum);
+        if (rc != 0) {
+            fprintf(stderr, "Error when calling sigwait: %d\n", rc);
+            exit(1);
+        }
+
+        switch(signum) {
+            case SIGALRM:
+                // signal round_cond
+                DBG(AT, "Got SIGALRM\n");
+                pthread_cond_signal(&n.round_cond);
+                break;
+            case SIGINT:
+                DBG(AT, "Got SIGINT\n");
+                n.cleanup();
+                exit(EXIT_SUCCESS);
+                break;
+            default:
+                printf("Unknown signal %d\n", signum);
+        }
     }
 }
 
