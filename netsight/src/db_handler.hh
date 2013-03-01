@@ -23,7 +23,7 @@ class MongoHandler {
         void set_db(string s);
         void set_coll(string s);
 
-        auto_ptr<mongo::DBClientCursor> get_record(const mongo::Query &query);
+        auto_ptr<mongo::DBClientCursor> get_records(const mongo::Query &query);
         void add_record(const mongo::BSONObj &obj);
         void remove_records(const mongo::Query &query); 
         void flush();

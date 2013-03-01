@@ -47,7 +47,7 @@ void MongoHandler::set_coll(string s)
     ns = db_name + "." + coll_name;
 }
 
-auto_ptr<mongo::DBClientCursor> MongoHandler::get_record(const mongo::Query &query)
+auto_ptr<mongo::DBClientCursor> MongoHandler::get_records(const mongo::Query &query)
 {
     return db_conn.query(ns, query);
 }
