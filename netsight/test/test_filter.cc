@@ -5,7 +5,6 @@
 #include "tut/tut.hpp"
 #include "packet.hh"
 #include "helper.hh"
-#include "netsight.hh"
 #include "filter/regexp.hh"
 #include "test_util.hh"
 

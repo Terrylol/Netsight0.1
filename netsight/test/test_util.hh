@@ -2,7 +2,7 @@
 #define TEST_UTIL_HH
 
 #include <sstream>
-#include "netsight.hh"
+#include "postcard.hh"
 
 using namespace std;
 

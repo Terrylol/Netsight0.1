@@ -8,7 +8,6 @@
 #include "packet.hh"
 #include "helper.hh"
 #include "picojson.h"
-#include "netsight.hh"
 #include "test_util.hh"
 #include "topo_sort/topo_sort.hh"
 
