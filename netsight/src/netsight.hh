@@ -28,7 +28,10 @@ class NetSight {
     private:
         string sniff_dev;
         string topo_filename;
+
+        /* private data structures */
         Topology topo;
+        unordered_map<int, int> psid_to_dpid;
 
         struct bpf_program postcard_fp;  /* compiled filter program (expression) */
         pcap_t *postcard_handle;         /* packet capture handle */
@@ -37,6 +40,8 @@ class NetSight {
         MongoHandler ft_db;
         MongoHandler psid_db;
         MongoHandler topo_db;
+        void read_topo_db();
+        void read_psid_db();
 
         /* Signals that are handled by various threads */
         sigset_t sigset;
@@ -71,7 +76,6 @@ class NetSight {
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
         void cleanup();
         void interact();
-        void read_topology();
 
     public:
         void start();

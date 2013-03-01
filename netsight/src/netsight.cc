@@ -280,14 +280,15 @@ NetSight::connect_db(string host)
         exit(EXIT_FAILURE);
     }
 
-    read_topology();
+    read_topo_db();
+    read_psid_db();
 }
 
 void 
-NetSight::read_topology()
+NetSight::read_topo_db()
 {
-    auto_ptr<mongo::DBClientCursor> cursor = topo_db.get_records(mongo::BSONObj());
     DBG(AT, "Reading topology from the DB:\n");
+    auto_ptr<mongo::DBClientCursor> cursor = topo_db.get_records(mongo::BSONObj());
     if(cursor->more()) {
         stringstream ss;
         mongo::BSONObj obj = cursor->next();
@@ -297,6 +298,20 @@ NetSight::read_topology()
     }
     else {
         DBG(AT, "No topology info in the DB\n");
+    }
+}
+
+void 
+NetSight::read_psid_db()
+{
+    DBG(AT, "Reading psid-to-dpid from the DB:\n");
+    auto_ptr<mongo::DBClientCursor> cursor = psid_db.get_records(mongo::BSONObj());
+    while(cursor->more()) {
+        mongo::BSONObj obj = cursor->next();
+        int psid = obj["psid"].Int();
+        int dpid = obj["dpid"].Int();
+        psid_to_dpid[psid] = dpid;
+        DBG(AT, "%d -> %d\n", psid, dpid);
     }
 }
 
