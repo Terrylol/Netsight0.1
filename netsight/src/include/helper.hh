@@ -44,9 +44,9 @@
 #define DEBUG 
 
 #ifdef DEBUG
-# define DBG(l, m) debug(l, m)
+# define DBG(l, ...) debug(l, __VA_ARGS__)
 #else
-# define DBG(l, m)
+# define DBG(l, ...)
 #endif
 
 using namespace std;
