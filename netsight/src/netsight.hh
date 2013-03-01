@@ -42,6 +42,7 @@ class NetSight {
         MongoHandler topo_db;
         void read_topo_db();
         void read_psid_db();
+        void get_flow_entry(int dpid, int version, string &match, vector<string> &actions);
 
         /* Signals that are handled by various threads */
         sigset_t sigset;

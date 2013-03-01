@@ -315,3 +315,25 @@ NetSight::read_psid_db()
     }
 }
 
+void 
+NetSight::get_flow_entry(int dpid, int version, string &match, vector<string> &actions)
+{
+    DBG(AT, "Reading flow table entry from the DB:\n");
+    DBG(AT, "dpid:%d, version: %d\n", dpid, version);
+    mongo::BSONObjBuilder query;
+    query << "dpid" << dpid << "version" << version;
+    auto_ptr<mongo::DBClientCursor> cursor = ft_db.get_records(query.obj());
+    if(cursor->more()) {
+        mongo::BSONObj obj = cursor->next();
+        DBG(AT, "%s\n", obj.jsonString().c_str());
+        match = obj["match"].toString();
+        vector<mongo::BSONElement> action_obj = obj["action"].Array();
+        for(int i = 0; i < action_obj.size(); i++) {
+            actions.push_back(action_obj[i].toString());
+        }
+    }
+    else {
+        DBG(AT, "Error: No matching flow-entry found...\n");
+    }
+}
+
