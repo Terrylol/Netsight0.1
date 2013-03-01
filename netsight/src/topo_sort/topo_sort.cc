@@ -38,6 +38,8 @@ Topology::read_topo(istream &in)
     }
     */
 
+    g.clear();
+
     picojson::value v, topo_j, nodes_j, links_j;
 
     string err = picojson::parse(v, in);
@@ -51,7 +53,7 @@ Topology::read_topo(istream &in)
         //NOTE: For some weird reason, picojson reads int values in the json
         //string as double
         int dpid = (int) (*iter).get("dpid").get<double>();
-        g[dpid] = unordered_map<int, int>();
+        add_node(dpid);
     }
 
     picojson::array links_list = links_j.get<picojson::array>();
@@ -60,9 +62,23 @@ Topology::read_topo(istream &in)
         u64 src_port = (u64) (*iter).get("src_port").get<double>();
         u64 dst_dpid = (u64) (*iter).get("dst_dpid").get<double>();
         u64 dst_port = (u64) (*iter).get("dst_port").get<double>();
-        set_neighbor(src_dpid, src_port, dst_dpid);
-        set_neighbor(dst_dpid, dst_port, src_dpid);
+        add_edge(src_dpid, src_port, dst_dpid, dst_port);
     }
+}
+
+void Topology::add_node(int dpid)
+{
+    if(g.find(dpid) == g.end()) {
+        g[dpid] = unordered_map<int, int>();
+    }
+}
+
+void Topology::add_edge(int dpid1, int port1, int dpid2, int port2)
+{
+    add_node(dpid1);
+    add_node(dpid2);
+    set_neighbor(dpid1, port1, dpid2);
+    set_neighbor(dpid2, port2, dpid1);
 }
 
 void 

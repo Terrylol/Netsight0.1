@@ -15,6 +15,8 @@ using namespace std;
 class Topology {
     private:
         unordered_map<int, unordered_map<int, int> > g;
+        void add_node(int dpid);
+        void add_edge(int dpid1, int port1, int dpid2, int port2);
     public:
         int get_neighbor(int dpid, int outport)
         {
