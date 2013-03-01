@@ -21,6 +21,7 @@
 #include "topo_sort/topo_sort.hh"
 
 #define ROUND_LENGTH 1000 //round length in ms
+#define PACKET_HISTORY_PERIOD 100 //packet history duration in ms
 
 using namespace std;
 

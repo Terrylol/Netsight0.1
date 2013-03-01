@@ -132,20 +132,34 @@ NetSight::run_history_worker(void *args)
 
         pthread_mutex_unlock(&stage_lock);
 
-        //TODO:
-        // For each old enough PostcardList:
+        // For each PostcardList older than PACKET_HISTORY_PERIOD:
         // - topo-sort the PostcardList
-        // - create a PackedPostcardList, and
         // - match against all the filters
+        unordered_map<u64, PostcardList>::iterator it;
+        for(it = path_table.table.begin(); it != path_table.table.end(); ) {
+            PostcardNode *pn = it->second.head;
+            struct timeval curr;
+            gettimeofday(&curr, NULL);
+            double ts_diff = diff_time_ms(curr, pn->pkt->ts);
+            if(ts_diff > PACKET_HISTORY_PERIOD) {
+                PostcardList &pl = it->second;
+                topo_sort(&pl, topo);
+                for(int i = 0; i < filters.size(); i++) {
+                    if(filters[i].match(pl)) {
+                        pl.print();
+                    }
+                }
+                it = path_table.table.erase(it);
+            }
+            else {
+                it++;
+            }
+        }
 
     }
 }
 
-void 
-NetSight::sniff_pkts(const char *dev)
-{
-    char errbuf[PCAP_ERRBUF_SIZE];          /* error buffer */
-
+void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];          /* error buffer */ 
     const char *filter_exp = POSTCARD_FILTER;/* filter expression [3] */
     bpf_u_int32 mask;                       /* subnet mask */
     bpf_u_int32 net;                        /* ip */
