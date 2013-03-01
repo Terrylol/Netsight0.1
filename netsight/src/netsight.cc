@@ -279,5 +279,24 @@ NetSight::connect_db(string host)
         fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
         exit(EXIT_FAILURE);
     }
+
+    read_topology();
+}
+
+void 
+NetSight::read_topology()
+{
+    auto_ptr<mongo::DBClientCursor> cursor = topo_db.get_records(mongo::BSONObj());
+    DBG(AT, "Reading topology from the DB:\n");
+    if(cursor->more()) {
+        stringstream ss;
+        mongo::BSONObj obj = cursor->next();
+        DBG(AT, "%s\n", obj.jsonString().c_str());
+        ss << obj.jsonString();
+        topo.read_topo(ss);
+    }
+    else {
+        DBG(AT, "No topology info in the DB\n");
+    }
 }
 
