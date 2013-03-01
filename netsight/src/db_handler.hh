@@ -15,11 +15,11 @@ class MongoHandler {
         string ns;
         bool flush_on_del;
 
-        int connect(string host);
         void disconnect();
     public:
-        MongoHandler(string host="localhost:27017", string db_name="ndb", string coll_name="flow-tables", bool flush_on_del=false);
+        MongoHandler(string db_name="ndb", string coll_name="flow-tables", bool flush_on_del=false);
         ~MongoHandler();
+        int connect(string host);
         void set_db(string s);
         void set_coll(string s);
 

@@ -5,6 +5,7 @@ static struct option long_options[] =
 {
     {"topo", required_argument, NULL, 't'},
     {"intf", required_argument, NULL, 'i'},
+    {"db", required_argument, NULL, 'd'},
     {NULL, 0, NULL, 0}
 };
 
@@ -14,9 +15,11 @@ parse_args(int argc, char **argv, NetSight &n)
     // loop over all of the options
     int option_index = 0;
     int ch;
-    printf("Parsing arguments...\n");
-    while ((ch = getopt_long(argc, argv, "i:t:", 
+    string db_host("localhost");
+    DBG(AT, "Parsing arguments...\n");
+    while ((ch = getopt_long(argc, argv, "i:t:d:", 
                     long_options, &option_index)) != -1) {
+        DBG(AT, "Got option: %c\n", ch);
         switch (ch) {
             case 'i':
                 n.set_sniff_dev(optarg);
@@ -24,17 +27,23 @@ parse_args(int argc, char **argv, NetSight &n)
             case 't':
                 n.set_topo_filename(optarg);
                 break;
+            case 'd':
+                db_host = optarg;
+                break;
             default:
-                abort ();
+                fprintf(stderr, "Unknown argument: %c:%s\n", ch, optarg);
+                exit(EXIT_FAILURE);
         }
     }
+    n.connect_db(db_host);
 }
 
 int 
 main(int argc, char **argv)
 {
-    NetSight &netsight = NetSight::get_instance();
-    netsight.start();
+    NetSight &n= NetSight::get_instance();
+    parse_args(argc, argv, n);
+    n.start();
 
     return 0;
 }

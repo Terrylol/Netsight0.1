@@ -16,6 +16,7 @@
 #include "flow.hh"
 #include "types.hh"
 
+#include "db_handler.hh"
 #include "filter/regexp.hh"
 #include "topo_sort/topo_sort.hh"
 
@@ -31,6 +32,11 @@ class NetSight {
 
         struct bpf_program postcard_fp;  /* compiled filter program (expression) */
         pcap_t *postcard_handle;         /* packet capture handle */
+
+        /* MongoDB handlers */
+        MongoHandler ft_db;
+        MongoHandler psid_db;
+        MongoHandler topo_db;
 
         /* Signals that are handled by various threads */
         sigset_t sigset;
@@ -65,6 +71,7 @@ class NetSight {
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
         void cleanup();
         void interact();
+        void read_topology();
 
     public:
         void start();
@@ -85,6 +92,8 @@ class NetSight {
             fstream fs(topo_filename.c_str(), ios::in);
             topo.read_topo(fs);
         }
+
+        void connect_db(string host);
 };
 
 #endif //NETSIGHT_HH

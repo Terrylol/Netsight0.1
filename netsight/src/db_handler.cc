@@ -1,13 +1,10 @@
 #include "db_handler.hh"
+#include "helper.hh"
 
-MongoHandler::MongoHandler(string host, string db_name, string coll_name, bool flush_on_del)
+MongoHandler::MongoHandler(string db_name, string coll_name, bool flush_on_del)
 {
-    db_host = host;
     set_db(db_name);
     set_coll(coll_name);
-    if(!connect(db_host)) {
-        fprintf(stderr, "Could not connect to MongoDB: %s\n", db_host.c_str());
-    }
 }
 
 MongoHandler::~MongoHandler()
@@ -20,6 +17,8 @@ MongoHandler::~MongoHandler()
 
 int MongoHandler::connect(string host)
 {
+    DBG(AT, "Connecting to MongoDB at %s\n", host.c_str());
+    db_host = host;
     try {
         db_conn.connect(host);
     }
@@ -27,6 +26,8 @@ int MongoHandler::connect(string host)
         fprintf(stderr, "Error in connect(): Could not connect to %s\n", host.c_str());
         return 0;
     }
+
+    DBG(AT, "Successfully connected to MongoDB\n");
     return 1;
 }
 

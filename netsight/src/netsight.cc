@@ -19,6 +19,16 @@ using namespace std;
 
 NetSight::NetSight()
 {
+    /* Database handler initialization */
+    topo_db.set_db("ndb");
+    topo_db.set_coll("topo");
+
+    ft_db.set_db("ndb");
+    ft_db.set_coll("flow-tables");
+
+    psid_db.set_db("ndb");
+    psid_db.set_coll("psid-to-dpid");
+
     /* Initialize mutexes and condition variables */
     pthread_mutex_init(&stage_lock, NULL);
     pthread_cond_init(&round_cond, NULL);
@@ -251,6 +261,23 @@ NetSight::sig_handler(void *args)
             default:
                 printf("Unknown signal %d\n", signum);
         }
+    }
+}
+
+void 
+NetSight::connect_db(string host)
+{
+    if(!topo_db.connect(host)) {
+        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        exit(EXIT_FAILURE);
+    }
+    if(!ft_db.connect(host)) {
+        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        exit(EXIT_FAILURE);
+    }
+    if(!psid_db.connect(host)) {
+        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        exit(EXIT_FAILURE);
     }
 }
 
