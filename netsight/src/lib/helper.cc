@@ -135,3 +135,8 @@ void byteify_packet(const char *hex, u8 *bytes, size_t *buflen)
     }
 }
 
+double diff_time_ms(const timeval &t1, const timeval &t2)
+{
+    return ((t1.tv_sec - t2.tv_sec) * 1000.) + 
+            (t1.tv_usec - t2.tv_usec)/1000.;
+}

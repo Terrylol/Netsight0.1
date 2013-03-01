@@ -68,6 +68,7 @@ u64 memory_usage_kb();
 void print_timestamp(struct timeval ts);
 void hexify_packet(const u8 *buf, char *hex, size_t buflen);
 void byteify_packet(const char *hex, u8 *bytes, size_t *buflen);
+double diff_time_ms(const timeval &t1, const timeval &t2);
 
 template<class T>
 float 
