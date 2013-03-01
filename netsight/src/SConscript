@@ -1,7 +1,7 @@
 env = Environment(CCFLAGS='-O9 -std=c++0x',
                     CPPPATH=['include'])
 
-src_files = ['main.cc', 'netsight.cc', 'path_table.cc']
+src_files = ['main.cc', 'netsight.cc', 'path_table.cc', 'db_handler.cc']
 
 lib_deps = []
 lib_paths = []
@@ -21,7 +21,10 @@ lib_paths.append('compress')
 lib_deps.append('bpfjit')
 lib_paths.append('filter/bpf-linux')
 
-lib_deps += ['pcap', 'pthread', 'z']
+lib_deps += ['pcap', 'pthread', 'z', 
+                'mongoclient', 'boost_thread-mt', 'boost_filesystem', 
+                'boost_program_options', 'boost_system']
+
 
 env.Program(target='netsight', source=src_files,
             LIBS=lib_deps, LIBPATH=lib_paths,
