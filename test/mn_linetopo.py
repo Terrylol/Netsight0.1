@@ -104,7 +104,7 @@ def main():
         dump_out_band_topo(topo, args.topo_outfile)
 
     net = Mininet(topo=topo, switch=OVSKernelSwitch, controller=RemoteController,
-            link=TCLink, autoSetMacs=True, autoStaticArp=True)
+            link=TCLink, ipBase='11.0.0.0/8', autoSetMacs=True, autoStaticArp=True)
     net.start()
     CLI(net)
     net.stop()
