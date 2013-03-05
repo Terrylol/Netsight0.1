@@ -12,7 +12,7 @@
 #include "netsight.hh"
 
 #define SNAP_LEN 1514
-#define POSTCARD_FILTER ""
+#define POSTCARD_FILTER "vlan 2"
 static int SKIP_ETHERNET = 0;
 
 using namespace std;
@@ -124,11 +124,14 @@ NetSight::run_history_worker(void *args)
 
         // Empty stage and populate path_table
         PostcardNode *pn = stage.head;
+        DBG(AT, "Going to empty stage with %d postcards\n", stage.length);
         for(int i = 0; i < stage.length; i++) {
+            DBG(AT, ".");
             PostcardNode *p = stage.remove(pn);
             path_table.insert_postcard(p);
             pn = pn->next;
         }
+        DBG(AT, "\n");
 
         pthread_mutex_unlock(&stage_lock);
 
@@ -205,10 +208,12 @@ void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];     
         return;
     }
 
-    while(true) {
+    struct pcap_pkthdr hdr;
+    const u_char *pkt;
+    while((pkt = pcap_next(postcard_handle, &hdr)) != NULL) {
         pthread_testcancel();
-        struct pcap_pkthdr hdr;
-        const u_char *pkt = pcap_next(postcard_handle, &hdr);
+        //const u_char *pkt = pcap_next(postcard_handle, &hdr);
+        DBG(AT, "Got postcard: %p\n", pkt);
         postcard_handler(&hdr, pkt);
     }
 
@@ -242,6 +247,7 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
     pthread_mutex_lock(&stage_lock);
     stage.push_back(new PostcardNode(new Packet(packet, header->len, 
                     SKIP_ETHERNET, packet_number++, header->caplen)));
+    DBG(AT, "Adding postcard to stage: length = %d\n", stage.length);
     Packet *pkt = (stage.tail)->pkt;
     pkt->ts = header->ts;
     pthread_mutex_unlock(&stage_lock);
@@ -322,8 +328,8 @@ NetSight::read_psid_db()
     auto_ptr<mongo::DBClientCursor> cursor = psid_db.get_records(mongo::BSONObj());
     while(cursor->more()) {
         mongo::BSONObj obj = cursor->next();
-        int psid = obj["psid"].Int();
-        int dpid = obj["dpid"].Int();
+        int psid = (int) obj["psid"].Int();
+        int dpid = (int) obj["dpid"].Int();
         psid_to_dpid[psid] = dpid;
         DBG(AT, "%d -> %d\n", psid, dpid);
     }
