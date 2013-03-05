@@ -1,5 +1,4 @@
-env = Environment(CCFLAGS='-O9 -std=c++0x',
-                    CPPPATH=['#netsight/src/include'])
+Import('env')
 
 yacc = env.CFile('parse.tab.cc', 'parse.y')
 src_files = ['recursive.cc', 'compile.cc', 'sub.cc'] + [yacc[0]]

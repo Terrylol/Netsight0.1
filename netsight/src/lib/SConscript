@@ -1,5 +1,4 @@
-env = Environment(CCFLAGS='-O9 -std=c++0x',
-                    CPPPATH=['#netsight/src/include'])
+Import('env')
 
 src_files = ['flow.cc', 'packet.cc', 'postcard.cc', 'helper.cc']
 env.StaticLibrary(target='netsightlib', source=src_files)

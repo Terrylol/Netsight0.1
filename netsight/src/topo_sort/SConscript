@@ -1,5 +1,4 @@
-env = Environment(CCFLAGS='-O9 -std=c++0x',
-                    CPPPATH=['#netsight/src/include'])
+Import('env')
 
 src_files = ['topo_sort.cc']
 lib_deps = ['netsightlib']

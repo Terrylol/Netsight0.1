@@ -40,9 +40,6 @@
 #define TOSTRING(x) STRINGIFY(x)
 #define AT __FILE__ ":" TOSTRING(__LINE__)
 
-//TODO: Make this a compile time option
-#define DEBUG 
-
 #ifdef DEBUG
 # define DBG(l, ...) debug(l, __VA_ARGS__)
 #else
