@@ -48,12 +48,12 @@
 
 using namespace std;
 
-static void debug(const char *location, const char *msg, ...)
+static inline void debug(const char *location, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
     printf(ANSI_COLOR_RED "%s: " ANSI_COLOR_RESET, location);
-    printf(msg, args);
+    vprintf(msg, args);
     va_end (args);
 }
 
