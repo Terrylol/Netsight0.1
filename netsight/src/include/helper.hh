@@ -41,9 +41,9 @@
 #define AT __FILE__ ":" TOSTRING(__LINE__)
 
 #ifdef DEBUG
-# define DBG(l, ...) debug(l, __VA_ARGS__)
+# define DBG(...) debug(AT, __VA_ARGS__)
 #else
-# define DBG(l, ...)
+# define DBG(...)
 #endif
 
 using namespace std;
@@ -52,8 +52,8 @@ static inline void debug(const char *location, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
-    printf(ANSI_COLOR_RED "%s: " ANSI_COLOR_RESET, location);
-    vprintf(msg, args);
+    string s = string(ANSI_COLOR_YELLOW) + location + ": " + msg + ANSI_COLOR_RESET;
+    vprintf(s.c_str(), args);
     va_end (args);
 }
 

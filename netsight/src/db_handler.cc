@@ -17,7 +17,7 @@ MongoHandler::~MongoHandler()
 
 int MongoHandler::connect(string host)
 {
-    DBG(AT, "Connecting to MongoDB at %s\n", host.c_str());
+    DBG("Connecting to MongoDB at %s\n", host.c_str());
     db_host = host;
     try {
         db_conn.connect(host);
@@ -27,7 +27,7 @@ int MongoHandler::connect(string host)
         return 0;
     }
 
-    DBG(AT, "Successfully connected to MongoDB\n");
+    DBG("Successfully connected to MongoDB\n");
     return 1;
 }
 

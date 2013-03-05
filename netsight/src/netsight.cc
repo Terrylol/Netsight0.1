@@ -79,7 +79,7 @@ NetSight::interact()
         cin.sync();
         if (!getline(cin, input))
             fprintf(stderr, "Error: Reading user input\n");
-        DBG(AT, "Got input\n");
+        DBG("Got input\n");
         if(input == "exit") {
             cleanup();
             exit(EXIT_SUCCESS);
@@ -120,18 +120,18 @@ NetSight::run_history_worker(void *args)
         pthread_mutex_lock(&stage_lock);
         pthread_cond_wait(&round_cond, &stage_lock);
 
-        DBG(AT, "----------------- ROUND COMPLETE ------------------\n\n");
+        DBG("----------------- ROUND COMPLETE ------------------\n\n");
 
         // Empty stage and populate path_table
         PostcardNode *pn = stage.head;
-        DBG(AT, "Going to empty stage with %d postcards\n", stage.length);
+        DBG("Going to empty stage with %d postcards\n", stage.length);
         for(int i = 0; i < stage.length; i++) {
-            DBG(AT, ".");
+            DBG(".");
             PostcardNode *p = stage.remove(pn);
             path_table.insert_postcard(p);
             pn = pn->next;
         }
-        DBG(AT, "\n");
+        DBG("\n");
 
         pthread_mutex_unlock(&stage_lock);
 
@@ -213,7 +213,7 @@ void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];     
     while((pkt = pcap_next(postcard_handle, &hdr)) != NULL) {
         pthread_testcancel();
         //const u_char *pkt = pcap_next(postcard_handle, &hdr);
-        DBG(AT, "Got postcard: %p\n", pkt);
+        DBG("Got postcard: %p\n", pkt);
         postcard_handler(&hdr, pkt);
     }
 
@@ -233,7 +233,7 @@ NetSight::cleanup()
     if(postcard_handle)
         pcap_close(postcard_handle);
 
-    DBG(AT, "\nCleanup complete.\n");
+    DBG("\nCleanup complete.\n");
 }
 
 /*
@@ -247,7 +247,7 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
     pthread_mutex_lock(&stage_lock);
     stage.push_back(new PostcardNode(new Packet(packet, header->len, 
                     SKIP_ETHERNET, packet_number++, header->caplen)));
-    DBG(AT, "Adding postcard to stage: length = %d\n", stage.length);
+    DBG("Adding postcard to stage: length = %d\n", stage.length);
     Packet *pkt = (stage.tail)->pkt;
     pkt->ts = header->ts;
     pthread_mutex_unlock(&stage_lock);
@@ -270,11 +270,11 @@ NetSight::sig_handler(void *args)
         switch(signum) {
             case SIGALRM:
                 // signal round_cond
-                DBG(AT, "Got SIGALRM\n");
+                DBG("Got SIGALRM\n");
                 pthread_cond_signal(&n.round_cond);
                 break;
             case SIGINT:
-                DBG(AT, "Got SIGINT\n");
+                DBG("Got SIGINT\n");
                 n.cleanup();
                 exit(EXIT_SUCCESS);
                 break;
@@ -307,45 +307,45 @@ NetSight::connect_db(string host)
 void 
 NetSight::read_topo_db()
 {
-    DBG(AT, "Reading topology from the DB:\n");
+    DBG("Reading topology from the DB:\n");
     auto_ptr<mongo::DBClientCursor> cursor = topo_db.get_records(mongo::BSONObj());
     if(cursor->more()) {
         stringstream ss;
         mongo::BSONObj obj = cursor->next();
-        DBG(AT, "%s\n", obj.jsonString().c_str());
+        DBG("%s\n", obj.jsonString().c_str());
         ss << obj.jsonString();
         topo.read_topo(ss);
     }
     else {
-        DBG(AT, "No topology info in the DB\n");
+        DBG("No topology info in the DB\n");
     }
 }
 
 void 
 NetSight::read_psid_db()
 {
-    DBG(AT, "Reading psid-to-dpid from the DB:\n");
+    DBG("Reading psid-to-dpid from the DB:\n");
     auto_ptr<mongo::DBClientCursor> cursor = psid_db.get_records(mongo::BSONObj());
     while(cursor->more()) {
         mongo::BSONObj obj = cursor->next();
         int psid = (int) obj["psid"].Int();
         int dpid = (int) obj["dpid"].Int();
         psid_to_dpid[psid] = dpid;
-        DBG(AT, "%d -> %d\n", psid, dpid);
+        DBG("%d -> %d\n", psid, dpid);
     }
 }
 
 void 
 NetSight::get_flow_entry(int dpid, int version, string &match, vector<string> &actions)
 {
-    DBG(AT, "Reading flow table entry from the DB:\n");
-    DBG(AT, "dpid:%d, version: %d\n", dpid, version);
+    DBG("Reading flow table entry from the DB:\n");
+    DBG("dpid:%d, version: %d\n", dpid, version);
     mongo::BSONObjBuilder query;
     query << "dpid" << dpid << "version" << version;
     auto_ptr<mongo::DBClientCursor> cursor = ft_db.get_records(query.obj());
     if(cursor->more()) {
         mongo::BSONObj obj = cursor->next();
-        DBG(AT, "%s\n", obj.jsonString().c_str());
+        DBG("%s\n", obj.jsonString().c_str());
         match = obj["match"].toString();
         vector<mongo::BSONElement> action_obj = obj["action"].Array();
         for(int i = 0; i < action_obj.size(); i++) {
@@ -353,7 +353,7 @@ NetSight::get_flow_entry(int dpid, int version, string &match, vector<string> &a
         }
     }
     else {
-        DBG(AT, "Error: No matching flow-entry found...\n");
+        DBG("Error: No matching flow-entry found...\n");
     }
 }
 

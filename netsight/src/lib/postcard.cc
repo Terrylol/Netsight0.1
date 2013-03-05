@@ -29,7 +29,7 @@ PostcardList::insert(PostcardNode *p, PostcardNode *loc)
         p->next->prev = p;
         loc->next = p;
     }
-    DBG(AT, "Inserting postcard: length = %d\n", length);
+    DBG("Inserting postcard: length = %d\n", length);
     length++;
 }
 
@@ -51,7 +51,7 @@ PostcardList::remove(PostcardNode *p)
     }
     p->next = p->prev = NULL;
     length--;
-    DBG(AT, "Removing postcard: length = %d\n", length);
+    DBG("Removing postcard: length = %d\n", length);
     return p;
 }
 

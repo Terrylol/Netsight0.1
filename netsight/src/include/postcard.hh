@@ -74,7 +74,7 @@ class PostcardList {
             head = NULL;
             tail = NULL;
             length = 0;
-            DBG(AT, "PostcardList constructor: length = 0x%x\n", length);
+            DBG("PostcardList constructor: length = 0x%x\n", length);
         }
 
         /* Copy constructor */

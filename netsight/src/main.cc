@@ -16,10 +16,10 @@ parse_args(int argc, char **argv, NetSight &n)
     int option_index = 0;
     int ch;
     string db_host("localhost");
-    DBG(AT, "Parsing arguments...\n");
+    DBG("Parsing arguments...\n");
     while ((ch = getopt_long(argc, argv, "i:t:d:", 
                     long_options, &option_index)) != -1) {
-        DBG(AT, "Got option: %c\n", ch);
+        DBG("Got option: %c\n", ch);
         switch (ch) {
             case 'i':
                 n.set_sniff_dev(optarg);
