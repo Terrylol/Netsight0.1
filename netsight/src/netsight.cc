@@ -12,7 +12,8 @@
 #include "netsight.hh"
 
 #define SNAP_LEN 1514
-#define POSTCARD_FILTER "vlan 2"
+#define POSTCARD_FILTER ""
+#define DEBUG_VLAN 0x02
 static int SKIP_ETHERNET = 0;
 
 using namespace std;
@@ -209,13 +210,15 @@ void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];     
     }
 
     struct pcap_pkthdr hdr;
-    const u_char *pkt;
-    while((pkt = pcap_next(postcard_handle, &hdr)) != NULL) {
+    while(true) {
         pthread_testcancel();
-        //const u_char *pkt = pcap_next(postcard_handle, &hdr);
+        const u_char *pkt = pcap_next(postcard_handle, &hdr);
+        if(pkt == NULL)
+            continue;
         DBG("Got postcard: %p\n", pkt);
         postcard_handler(&hdr, pkt);
     }
+    DBG("Error! Should never come here...\n");
 
 }
 
@@ -245,8 +248,11 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
 {
     static u32 packet_number = 0;
     pthread_mutex_lock(&stage_lock);
-    stage.push_back(new PostcardNode(new Packet(packet, header->len, 
-                    SKIP_ETHERNET, packet_number++, header->caplen)));
+    Packet *p = new Packet(packet, header->len, 
+                    SKIP_ETHERNET, packet_number++, header->caplen);
+    if(!p->eth.vlan == DEBUG_VLAN)
+        return;
+    stage.push_back(new PostcardNode(p));
     DBG("Adding postcard to stage: length = %d\n", stage.length);
     Packet *pkt = (stage.tail)->pkt;
     pkt->ts = header->ts;
