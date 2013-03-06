@@ -77,7 +77,7 @@ class PostcardList {
             DBG("PostcardList constructor: length = 0x%x\n", length);
         }
 
-        /* Copy constructor */
+        /* Shallow copy constructor */
         PostcardList(const PostcardList &pl)
         {
             head = pl.head;

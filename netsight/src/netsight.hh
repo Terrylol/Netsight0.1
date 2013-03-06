@@ -54,7 +54,6 @@ class NetSight {
         PostcardList stage;
         PathTable path_table;
         pthread_mutex_t stage_lock;
-        pthread_cond_t round_cond;
         pthread_t postcard_t;
         pthread_t history_t;
 
@@ -64,7 +63,7 @@ class NetSight {
         void operator=(NetSight const&); // Don't implement
 
         /* signal handler thread */
-        static void *sig_handler(void *args);
+        static void sig_handler(int signum);
 
         /* postcard worker thread */
         static void *postcard_worker(void *args);

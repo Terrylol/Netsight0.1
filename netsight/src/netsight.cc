@@ -32,12 +32,10 @@ NetSight::NetSight()
 
     /* Initialize mutexes and condition variables */
     pthread_mutex_init(&stage_lock, NULL);
-    pthread_cond_init(&round_cond, NULL);
 
     /* set of signals that the signal handler thread should handle*/
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);
-    sigaddset(&sigset, SIGALRM);
 }
 
 void
@@ -54,16 +52,11 @@ NetSight::start()
     /* Start history worker thread */
     pthread_create(&history_t, NULL, &NetSight::history_worker, NULL);
 
-    /* create a signal handler thread*/
-    pthread_create (&sig_handler_t, NULL, &NetSight::sig_handler, NULL);
+    /* Unblock the signals */
+    pthread_sigmask(SIG_UNBLOCK, &sigset, NULL);
 
-    /* Start round timers */
-    struct itimerval round_timer;
-    round_timer.it_interval.tv_usec = (int)(ROUND_LENGTH % 1000) * 1000;
-    round_timer.it_interval.tv_sec = (int) (ROUND_LENGTH/1000);
-    round_timer.it_value.tv_usec = (int)(ROUND_LENGTH % 1000) * 1000;
-    round_timer.it_value.tv_sec = (int) (ROUND_LENGTH/1000);
-    setitimer (ITIMER_REAL, &round_timer, NULL);
+    /* create a signal handler */
+    signal(SIGINT, sig_handler);
 
     interact();
 }
@@ -116,25 +109,32 @@ NetSight::history_worker(void *args)
 void*
 NetSight::run_history_worker(void *args)
 {
+    struct timeval start_t, end_t;
     while(true) {
         pthread_testcancel();
-        pthread_mutex_lock(&stage_lock);
-        pthread_cond_wait(&round_cond, &stage_lock);
-
         DBG("----------------- ROUND COMPLETE ------------------\n\n");
+        gettimeofday(&start_t, NULL);
 
-        // Empty stage and populate path_table
-        PostcardNode *pn = stage.head;
-        DBG("Going to empty stage with %d postcards\n", stage.length);
-        for(int i = 0; i < stage.length; i++) {
-            DBG("stage.remove()\n");
+        pthread_mutex_lock(&stage_lock);
+
+        // Empty the contents of stage into a local PostcardList
+        PostcardList pl(stage);
+        stage.head = stage.tail = NULL;
+        stage.length = 0;
+
+        pthread_mutex_unlock(&stage_lock);
+
+        // Empty the local PostcardList and populate path_table
+        PostcardNode *pn = pl.head;
+        DBG("Going to empty local PostcardList with %d postcards\n", pl.length);
+        for(int i = 0; i < pl.length; i++) {
+            DBG("pl.remove()\n");
             PostcardNode *next_pn = pn->next;
-            PostcardNode *p = stage.remove(pn);
+            PostcardNode *p = pl.remove(pn);
             path_table.insert_postcard(p);
             pn = next_pn;
         }
 
-        pthread_mutex_unlock(&stage_lock);
 
         // For each PostcardList older than PACKET_HISTORY_PERIOD:
         // - topo-sort the PostcardList
@@ -160,7 +160,11 @@ NetSight::run_history_worker(void *args)
                 it++;
             }
         }
-
+        gettimeofday(&end_t, NULL);
+        double diff_t = diff_time_ms(end_t, start_t);
+        if(diff_t < ROUND_LENGTH) {
+            usleep((long)(ROUND_LENGTH - diff_t) * 1000);
+        }
     }
 }
 
@@ -260,36 +264,19 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
     pthread_mutex_unlock(&stage_lock);
 }
 
-void *
-NetSight::sig_handler(void *args)
+void
+NetSight::sig_handler(int signum)
 {
-    int signum;
-    int rc; /* returned code       */
     NetSight &n = NetSight::get_instance();
 
-    while(true) {
-        rc = sigwait (&n.sigset, &signum);
-        if (rc != 0) {
-            fprintf(stderr, "Error when calling sigwait: %d\n", rc);
-            exit(1);
-        }
-
-        switch(signum) {
-            case SIGALRM:
-                // signal round_cond
-                DBG("Got SIGALRM\n");
-                pthread_mutex_lock(&n.stage_lock);
-                pthread_cond_signal(&n.round_cond);
-                pthread_mutex_unlock(&n.stage_lock);
-                break;
-            case SIGINT:
-                DBG("Got SIGINT\n");
-                n.cleanup();
-                exit(EXIT_SUCCESS);
-                break;
-            default:
-                printf("Unknown signal %d\n", signum);
-        }
+    switch(signum) {
+        case SIGINT:
+            DBG("Got SIGINT\n");
+            n.cleanup();
+            exit(EXIT_SUCCESS);
+            break;
+        default:
+            printf("Unknown signal %d\n", signum);
     }
 }
 
