@@ -127,12 +127,12 @@ NetSight::run_history_worker(void *args)
         PostcardNode *pn = stage.head;
         DBG("Going to empty stage with %d postcards\n", stage.length);
         for(int i = 0; i < stage.length; i++) {
-            DBG(".");
+            DBG("stage.remove()\n");
+            PostcardNode *next_pn = pn->next;
             PostcardNode *p = stage.remove(pn);
             path_table.insert_postcard(p);
-            pn = pn->next;
+            pn = next_pn;
         }
-        DBG("\n");
 
         pthread_mutex_unlock(&stage_lock);
 
@@ -153,6 +153,7 @@ NetSight::run_history_worker(void *args)
                         pl.print();
                     }
                 }
+                pl.clear();
                 it = path_table.table.erase(it);
             }
             else {
@@ -277,7 +278,9 @@ NetSight::sig_handler(void *args)
             case SIGALRM:
                 // signal round_cond
                 DBG("Got SIGALRM\n");
+                pthread_mutex_lock(&n.stage_lock);
                 pthread_cond_signal(&n.round_cond);
+                pthread_mutex_unlock(&n.stage_lock);
                 break;
             case SIGINT:
                 DBG("Got SIGINT\n");
