@@ -185,8 +185,7 @@ class PacketHistoryFilter {
         {
             DBG("Matching:\n");
             DBG("PHF:\"%s\"\n", regex);
-            DBG("Packet History:");
-            pl.print();
+            DBG("Packet History:\n%s\n", pl.str().c_str());
             return match_fn(prog, pl.head, sub, nelem(sub));
         }
 };

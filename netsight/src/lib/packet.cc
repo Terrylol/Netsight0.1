@@ -359,24 +359,26 @@ Packet::Packet(const u8 *pkt, u32 sz, int skip_ethernet, u32 packet_number, int 
         unpack();
 }
 
-void 
-Packet::print_hex() 
+string
+Packet::str_hex() 
 {
+    char pkt_hex[1500];
     int i;
     assert(size <= MAX_PKT_SIZE);
     for (i = 0; i < size; i++) {
         if (i % 16 == 0)
-            printf("%04x ", i);
+            sprintf(pkt_hex, "%04x ", i);
         if (buff[i] < 16)
-            printf("0");
-        printf("%x ", (u8) buff[i]);
+            sprintf(pkt_hex, "0");
+        sprintf(pkt_hex, "%x ", (u8) buff[i]);
         if ((i + 1) % 8 == 0)
-            printf(" ");
+            sprintf(pkt_hex, " ");
         if ((i + 1) % 16 == 0)
-            printf("\n");
+            sprintf(pkt_hex, "\n");
     }
     if (size % 16 != 0)
-        printf("\n");
+        sprintf(pkt_hex, "\n");
+    return string(pkt_hex);
 }
 
 /* NOTE:

@@ -182,7 +182,7 @@ struct Packet {
     Packet(const u8 *pkt, u32 sz, int skip_ethernet = 0, u32 packet_number = 0, int caplen = 0, bool do_unpack=true);
 
     void unpack();
-    void print_hex();
+    string str_hex();
     void apply_diff(Header h, u64 v);
     HeaderValues get_headers();
     uint pack(u8* buf);

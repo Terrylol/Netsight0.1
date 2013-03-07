@@ -119,8 +119,7 @@ void
 topo_sort(PostcardList *pl, Topology &topo)
 {
     unordered_map<int, vector<PostcardNode*> > locs;
-    DBG("Topo-sorting:\n");
-    pl->print();
+    DBG("Topo-sorting:\n%s\n", pl->str().c_str());
 
     // populate locs
     PostcardNode *curr = pl->head;
@@ -182,7 +181,6 @@ topo_sort(PostcardList *pl, Topology &topo)
         pl->length += tmp_pl.length;
     }
 
-    DBG("Done Topo-sorting:\n");
-    pl->print();
+    DBG("Done Topo-sorting:\n%s\n", pl->str().c_str());
 }
 

@@ -2,6 +2,56 @@
 #include "postcard.hh"
 #include "helper.hh"
 
+PostcardNode::PostcardNode(Packet *p)
+{
+    prev = next = NULL;
+    pkt = p;
+    dpid = get_dpid();
+    inport = -1;
+    outport = get_outport();
+    version = get_version();
+}
+
+int 
+PostcardNode::get_dpid()
+{
+    u8 dpid = 0; 
+    memcpy(&dpid, &(pkt->eth.dst[5]), DPID_TAG_LEN);
+    return (int)dpid;
+}
+
+int 
+PostcardNode::get_outport()
+{
+    u16 outport = 0;
+    memcpy(&outport, &(pkt->eth.dst[3]), OUTPORT_TAG_LEN);
+    outport = ntohs(outport);
+    return (int)outport;
+}
+
+int 
+PostcardNode::get_version()
+{
+    u32 version = 0;
+    memcpy(&version, &(pkt->eth.dst[0]), VERSION_TAG_LEN);
+    version = ntohl(version);
+    version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
+    return (int)version;
+}
+string 
+PostcardNode::str()
+{
+    stringstream ss;
+    ss << "Switch: dpid: " << dpid  << hex << "(0x" << dpid << dec << ")" << endl;
+    ss << "\t" << "packet: " << pkt->str_hex() << endl;
+    ss << "\t" << "match: " << endl;
+    ss << "\t" << "action: " << endl;
+    ss << "\t" << "version: " << version << endl;
+    ss << "\t" << "inport: " << inport << endl;
+    ss << "\t" << "outport: " << outport << endl;
+    return ss.str();
+}
+
 /*
  * insert p after loc
  * if loc is NULL, insert at the head of the list
@@ -72,26 +122,11 @@ PostcardList::clear()
 string
 PostcardList::str()
 {
-    stringstream ss;
+    string s;
     PostcardNode *pn = head;
     while(pn) {
-        ss << pn->str();
+        s += pn->str();
         pn = pn->next;
-        if(pn)
-            ss << " -> ";
     }
-    return ss.str();
-}
-
-void 
-PostcardList::print()
-{
-    PostcardNode *pn = head;
-    while(pn) {
-        pn->print();
-        pn = pn->next;
-        if(pn)
-            printf(" -> ");
-    }
-    printf("\n");
+    return s;
 }

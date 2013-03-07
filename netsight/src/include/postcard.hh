@@ -27,50 +27,11 @@ class PostcardNode {
         int inport;
         int outport;
         int version;
-        PostcardNode(Packet *p)
-        {
-            prev = next = NULL;
-            pkt = p;
-            dpid = get_dpid();
-            inport = -1;
-            outport = get_outport();
-            version = get_version();
-        }
-
-        int get_dpid()
-        {
-            u8 dpid = 0; 
-            memcpy(&dpid, &(pkt->eth.dst[5]), DPID_TAG_LEN);
-            return (int)dpid;
-        }
-
-        int get_outport()
-        {
-            u16 outport = 0;
-            memcpy(&outport, &(pkt->eth.dst[3]), OUTPORT_TAG_LEN);
-            outport = ntohs(outport);
-            return (int)outport;
-        }
-
-        int get_version()
-        {
-            u32 version = 0;
-            memcpy(&version, &(pkt->eth.dst[0]), VERSION_TAG_LEN);
-            version = ntohl(version);
-            version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
-            return (int)version;
-        }
-        void print()
-        {
-            printf("{dpid: %d, inport: %d, outport: %d, version: %d}", dpid, inport, outport, version);
-        }
-
-        string str()
-        {
-            stringstream ss;
-            ss << "{dpid: " << dpid << ", inport: " << inport << ", outport: " << outport << ", version: " << version << "}";
-            return ss.str();
-        }
+        PostcardNode(Packet *p);
+        int get_dpid();
+        int get_outport();
+        int get_version();
+        string str();
 };
 
 class PostcardList {
@@ -104,7 +65,6 @@ class PostcardList {
         { insert(p, NULL); }
         void clear();
         string str();
-        void print();
 };
 
 #endif //POSTCARD_LIST_HH
