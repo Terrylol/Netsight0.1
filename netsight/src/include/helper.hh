@@ -54,6 +54,7 @@ static inline void debug(const char *location, const char *msg, ...)
     va_start(args, msg);
     string s = string(ANSI_COLOR_YELLOW) + location + ": " + msg + ANSI_COLOR_RESET;
     vprintf(s.c_str(), args);
+    fflush(stdout);
     va_end (args);
 }
 
