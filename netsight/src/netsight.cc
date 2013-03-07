@@ -257,7 +257,10 @@ NetSight::postcard_handler(const struct pcap_pkthdr *header, const u_char *packe
                     SKIP_ETHERNET, packet_number++, header->caplen);
     if(!p->eth.vlan == DEBUG_VLAN)
         return;
-    stage.push_back(new PostcardNode(p));
+    PostcardNode *pn = new PostcardNode(p);
+    assert(psid_to_dpid.find(pn->dpid) != psid_to_dpid.end());
+    pn->dpid = psid_to_dpid[pn->dpid];
+    stage.push_back(pn);
     DBG("Adding postcard to stage: length = %d\n", stage.length);
     Packet *pkt = (stage.tail)->pkt;
     pkt->ts = header->ts;
