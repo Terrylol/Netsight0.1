@@ -4,6 +4,8 @@
 #include "packet.hh"
 #include "types.hh"
 #include "helper.hh"
+#include <string>
+#include <sstream>
 
 #define DPID_TAG_LEN 1
 #define OUTPORT_TAG_LEN 2
@@ -14,6 +16,8 @@
  * It's the caller's responsibility to allocate/deallocate memory for the Postcards
  * except in clear()
  * */
+using namespace std;
+
 class PostcardNode {
     public:
         PostcardNode *prev;
@@ -60,6 +64,13 @@ class PostcardNode {
         {
             printf("{dpid: %d, inport: %d, outport: %d, version: %d}", dpid, inport, outport, version);
         }
+
+        string str()
+        {
+            stringstream ss;
+            ss << "{dpid: " << dpid << ", inport: " << inport << ", outport: " << outport << ", version: " << version << "}";
+            return ss.str();
+        }
 };
 
 class PostcardList {
@@ -92,6 +103,7 @@ class PostcardList {
         void push_front(PostcardNode *p)
         { insert(p, NULL); }
         void clear();
+        string str();
         void print();
 };
 

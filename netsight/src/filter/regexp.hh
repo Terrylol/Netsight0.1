@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <stdarg.h>
 #include <assert.h>
 #include <pcap.h>
@@ -20,6 +21,8 @@
 #define MAX_BPF_SIZE 12800
 
 #define BPF_JIT 1
+
+using namespace std;
 
 typedef struct Regexp Regexp;
 typedef struct Prog Prog;
@@ -158,11 +161,16 @@ class PacketHistoryFilter {
             strcpy(regex, phf.regex);
         }
 
-        ~PacketHistoryFilter()
+        void clear()
         {
             free_reg(re);
             if(prog)
                 free(prog);
+        }
+
+        string str()
+        {
+            return string(regex);
         }
 
         void compile_(char *regex)
@@ -171,12 +179,14 @@ class PacketHistoryFilter {
             parse_postcard_filters(re);
             prog = compile(re);
             memset(sub, 0, sizeof sub);
-            //printre(re);
-            //printprog(prog);
         }
 
         int match(PostcardList &pl)
         {
+            DBG("Matching:\n");
+            DBG("PHF:\"%s\"\n", regex);
+            DBG("Packet History:");
+            pl.print();
             return match_fn(prog, pl.head, sub, nelem(sub));
         }
 };

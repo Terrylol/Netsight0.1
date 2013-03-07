@@ -69,6 +69,20 @@ PostcardList::clear()
     length = 0;
 }
 
+string
+PostcardList::str()
+{
+    stringstream ss;
+    PostcardNode *pn = head;
+    while(pn) {
+        ss << pn->str();
+        pn = pn->next;
+        if(pn)
+            ss << " -> ";
+    }
+    return ss.str();
+}
+
 void 
 PostcardList::print()
 {
