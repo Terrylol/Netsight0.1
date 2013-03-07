@@ -151,6 +151,7 @@ NetSight::run_history_worker(void *args)
                 for(int i = 0; i < filters.size(); i++) {
                     if(filters[i].match(pl)) {
                         pl.print();
+                        DBG("MATCHED REGEX: %s\n", filters[i].str().c_str());
                     }
                 }
                 pl.clear();
