@@ -6,6 +6,7 @@
 #include "helper.hh"
 #include "types.hh"
 
+#define OFPP_FLOOD 65531
 using namespace std;
 
 void
@@ -38,7 +39,7 @@ Topology::read_topo(istream &in)
     }
     */
 
-    g.clear();
+    neighbors.clear();
 
     picojson::value v, topo_j, nodes_j, links_j;
 
@@ -68,8 +69,8 @@ Topology::read_topo(istream &in)
 
 void Topology::add_node(int dpid)
 {
-    if(g.find(dpid) == g.end()) {
-        g[dpid] = unordered_map<int, int>();
+    if(neighbors.find(dpid) == neighbors.end()) {
+        neighbors[dpid] = unordered_map<int, int>();
     }
 }
 
@@ -79,58 +80,109 @@ void Topology::add_edge(int dpid1, int port1, int dpid2, int port2)
     add_node(dpid2);
     set_neighbor(dpid1, port1, dpid2);
     set_neighbor(dpid2, port2, dpid1);
+    ports[dpid1][dpid2] = make_pair(port1, port2);
+}
+
+static inline PostcardNode *get_next(unordered_map<int, vector<PostcardNode*> > &locs, int dpid=0)
+{
+    if(dpid) {
+        unordered_map<int, vector<PostcardNode*> >::iterator it = locs.find(dpid);
+        if(it != locs.end()) {
+            vector<PostcardNode*> &pn_vec = it->second;
+            if(pn_vec.size() > 0) {
+                PostcardNode *pn = pn_vec[0];
+                pn_vec.erase(pn_vec.begin());
+                if(pn_vec.empty())
+                    locs.erase(it);
+                return pn;
+            }
+        }
+        return NULL;
+    }
+    else {
+        EACH(it, locs) {
+            vector<PostcardNode*> &pn_vec = it->second;
+            if(pn_vec.size() > 0) {
+                PostcardNode *pn = pn_vec[0];
+                pn_vec.erase(pn_vec.begin());
+                if(pn_vec.empty())
+                    locs.erase(it);
+                return pn;
+            }
+        }
+    }
+
+    return NULL;
 }
 
 void 
 topo_sort(PostcardList *pl, Topology &topo)
 {
-    unordered_map<int, PostcardNode*> locs;
+    unordered_map<int, vector<PostcardNode*> > locs;
+    DBG("Topo-sorting:\n");
+    pl->print();
 
     // populate locs
     PostcardNode *curr = pl->head;
     while(curr != NULL) {
-        if (locs.find(curr->dpid) != locs.end()) {
-            fprintf(stderr, "Loop detected.  Can't do toposort with cycles.\n");
-            assert(false);
-        }
-        locs[curr->dpid] = curr;
+        (locs[curr->dpid]).push_back(curr);
         PostcardNode *next = curr->next;
         curr->next = curr->prev = NULL; //reset the pointers
         curr = next;
     }
 
-    vector<PostcardNode *> tails;
-
-    EACH(it, locs) {
-        PostcardNode *curr = it->second;
-        assert(curr->dpid == it->first);
-        int nbr = topo.get_neighbor(curr->dpid, curr->outport);
-        if((nbr > 0) && (locs.find(nbr) != locs.end())) {
-            PostcardNode *nxt = locs[nbr];
-            curr->next = nxt;
-            nxt->prev = curr;
+    //reset the fields of pl
+    pl->head = pl->tail = NULL;
+    pl->length = 0;
+    curr = NULL;
+    while((curr = get_next(locs)) != NULL) {
+        PostcardList tmp_pl;
+        while(curr != NULL) {
+            tmp_pl.push_back(curr);
+            PostcardNode *nxt = NULL;
+            if(curr->outport == OFPP_FLOOD) {
+                EACH(nit, topo.get_neighbor_map(curr->dpid)) {
+                    int nbr = nit->second;
+                    nxt = get_next(locs, nbr);
+                    if(nxt) {
+                        curr->next = nxt;
+                        nxt->prev = curr;
+                        nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
+                        break;
+                    }
+                }
+            }
+            else {
+                int nbr = topo.get_neighbor(curr->dpid, curr->outport);
+                if(nbr) {
+                    nxt = get_next(locs, nbr);
+                    curr->next = nxt;
+                    nxt->prev = curr;
+                    nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
+                }
+            }
+            curr = nxt;
+        }
+        
+        //prepend tmp_pl to pl
+        if(pl->head) {
+            if(tmp_pl.tail) {
+                tmp_pl.tail->next = pl->head;
+                pl->head->prev = tmp_pl.tail;
+            }
+            if(tmp_pl.head) 
+                pl->head = tmp_pl.head;
         }
         else {
-            tails.push_back(curr);
+            pl->head = tmp_pl.head;
         }
+        if(!pl->tail) {
+            pl->tail = tmp_pl.tail;
+        }
+        pl->length += tmp_pl.length;
     }
 
-    if(tails.empty())
-        return;
-
-    //string together the segments
-    pl->tail = tails[tails.size()-1];
-    for(int i = tails.size()-1; i >= 0; i--) {
-        PostcardNode *curr = tails[i];
-        while(curr->prev)
-            curr = curr->prev;
-        if(i > 0) {
-            curr->prev = (tails[i-1]);
-            (tails[i-1])->next = curr;
-        }
-        else {
-            pl->head = curr;
-        }
-    }
+    DBG("Done Topo-sorting:\n");
+    pl->print();
 }
 
