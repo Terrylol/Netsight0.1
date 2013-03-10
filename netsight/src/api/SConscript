@@ -1,0 +1,8 @@
+Import('env')
+
+src_files = ['api.cc']
+lib_deps = ['netsightlib', 'zmq']
+lib_paths = ['#netsight/src/lib']
+env.StaticLibrary(target='netsightapi', source=src_files, 
+                    LIBS=lib_deps, LIBPATH=lib_paths)
+
