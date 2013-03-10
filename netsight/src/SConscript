@@ -26,7 +26,7 @@ lib_paths.append('compress')
 lib_deps.append('bpfjit')
 lib_paths.append('filter/bpf-linux')
 
-lib_deps += ['pcap', 'pthread', 'z', 
+lib_deps += ['pcap', 'pthread', 'zmq', 'z', 
                 'mongoclient', 'boost_thread-mt', 'boost_filesystem', 
                 'boost_program_options', 'boost_system']
 
@@ -35,5 +35,5 @@ env.Program(target='netsight', source=src_files,
             LIBS=lib_deps, LIBPATH=lib_paths,
             RPATH=[Dir('#').path + '/netsight/src/filter/bpf-linux'])
 
-SConscript(['lib/SConscript', 'filter/SConscript', 'topo_sort/SConscript',
-            'compress/SConscript'], exports='env')
+SConscript(['lib/SConscript', 'filter/SConscript', 'topo_sort/SConscript', 
+            'compress/SConscript', 'api/SConscript'], exports='env')
