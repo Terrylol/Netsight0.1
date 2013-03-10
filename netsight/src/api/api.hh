@@ -157,6 +157,8 @@ class GetFiltersReplyMessage: public Message {
         }
 };
 
+void subscribe_filter(string &filter, zmq::socket_t &sub_sock);
+void unsubscribe_filter(string &filter, zmq::socket_t &sub_sock);
 bool add_filter(string filter, zmq::socket_t &ctrl_sock, zmq::socket_t &sub_sock);
 bool delete_filter(string filter, zmq::socket_t &ctrl_sock, zmq::socket_t &sub_sock);
 vector<string> get_filters(zmq::socket_t &ctrl_sock);
