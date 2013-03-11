@@ -31,7 +31,7 @@ parse_args(int argc, char **argv, NetSight &n)
                 db_host = optarg;
                 break;
             default:
-                fprintf(stderr, "Unknown argument: %c:%s\n", ch, optarg);
+                ERR("Unknown argument: %c:%s\n", ch, optarg);
                 exit(EXIT_FAILURE);
         }
     }

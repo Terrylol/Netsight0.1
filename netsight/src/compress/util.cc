@@ -9,7 +9,7 @@ dieopenr(int fd)
 {
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
-        fprintf(stderr, "Cannot open temp file for reading\n");
+        ERR("Cannot open temp file for reading\n");
         exit(-1);
     }
     fseek(fp, 0, SEEK_SET);
@@ -22,7 +22,7 @@ dieopenw()
     FILE *fp = tmpfile();
 
     if (!fp) {
-        fprintf(stderr, "Cannot open temp file for writing\n");
+        ERR("Cannot open temp file for writing\n");
         exit(-1);
     }
     setvbuf(fp, NULL, _IOFBF, BUFSIZE);
@@ -41,7 +41,7 @@ compressed_write_stream(FILE *fp)
     gzFile ret = gzdopen(fileno(fp), "w");
 
     if (ret == NULL) {
-        fprintf(stderr, "Couldn't convert file %p to gzip stream.\n", fp);
+        ERR("Couldn't convert file %p to gzip stream.\n", fp);
         exit(-1);
     }
 

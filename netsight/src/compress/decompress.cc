@@ -99,7 +99,7 @@ Decompressor::read_ts_deltas()
     // Code derives from:
     //http://www.lemoda.net/c/gzfile-read/index.html
     if (!fp_ts_comp) {
-        fprintf(stderr, "gzopen of ts memstream failed: %s.\n", 
+        ERR("gzopen of ts memstream failed: %s.\n", 
                 strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -119,7 +119,7 @@ Decompressor::read_ts_deltas()
                 const char * error_string;
                 error_string = gzerror(fp_ts_comp, &err);
                 if (err) {
-                    fprintf(stderr, "Error: %s.\n", error_string);
+                    ERR("Error: %s.\n", error_string);
                     exit (EXIT_FAILURE);
                 }
             }

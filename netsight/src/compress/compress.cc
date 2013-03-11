@@ -3,6 +3,7 @@
 
 #include "compress.hh"
 #include "util.hh"
+#include "helper.hh"
 #include "types.hh"
 
 using namespace std;
@@ -256,7 +257,7 @@ Compressor::write_time_stamp(struct timeval &ts)
         printf("usec_delta: %llu\n", usec_delta);
 
         if (usec_delta >= UINT_MAX) {
-            fprintf(stderr, "Timestamp is wrapping\n");
+            ERR("Timestamp is wrapping\n");
         }
 
         u32 val = usec_delta;

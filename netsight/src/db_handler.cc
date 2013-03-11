@@ -23,7 +23,7 @@ int MongoHandler::connect(string host)
         db_conn.connect(host);
     }
     catch(const mongo::DBException &e) {
-        fprintf(stderr, "Error in connect(): Could not connect to %s\n", host.c_str());
+        ERR("Error in connect(): Could not connect to %s\n", host.c_str());
         return 0;
     }
 
