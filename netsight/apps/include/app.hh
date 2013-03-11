@@ -3,6 +3,8 @@
 
 #include <signal.h>
 #include <pthread.h>
+#include <ctime>
+#include <sstream>
 
 #include "zhelpers.hh"
 #include "api.hh"
@@ -33,8 +35,11 @@ class NetSightApp {
         static void *heartbeat_thread(void *args)
         {
             NetSightApp *app = static_cast<NetSightApp*>(args);
-            EchoRequestMessage msg;
             while(!app->s_interrupted) {
+                stringstream ss;
+                ss << time(NULL);
+                EchoRequestMessage msg(ss.str());
+                DBG("Sending ECHO_REQUEST with timestamp %s\n", ss.str().c_str());
                 s_send(app->get_req_sock(), msg.serialize());
                 s_sleep(HEARTBEAT_INTERVAL);
             }
