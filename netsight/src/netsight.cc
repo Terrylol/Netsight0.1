@@ -110,9 +110,15 @@ NetSight::serve()
             picojson::value message_j;
             string err = picojson::parse(message_j, ss);
             MessageType msg_type = (MessageType) message_j.get("type").get<u64>();
+            string msg_data = message_j.get("data").get<string>();
+
+            /* variables need to be initialized before switch statement */
+            EchoReplyMessage rep_msg(msg_data);
             switch(msg_type) {
                 case ECHO_REQUEST:
                     DBG("Received ECHO_REQUEST message\n");
+                    DBG("Sending ECHO_REPLY message\n");
+                    s_send(rep_sock, rep_msg.serialize());
                     break;
                 case ADD_FILTER_REQUEST:
                     DBG("Received ADD_FILTER_REQUEST message\n");
