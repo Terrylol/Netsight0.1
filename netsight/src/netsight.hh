@@ -25,9 +25,6 @@
 
 #define ROUND_LENGTH 1000 //round length in ms
 #define PACKET_HISTORY_PERIOD 100 //packet history duration in ms
-
-#define NETSIGHT_CONTROL_PORT 5566 
-#define NETSIGHT_HISTORY_PORT 5567
 #define POLL_TIMEOUT_MS 100 //timeout zmq poll every 100ms
 
 using namespace std;
