@@ -36,6 +36,9 @@ Frame1: Matched PHF (including the terminating NULL character)
 Frame2: JSON-serialized Packet History
 */
 
+#define NETSIGHT_CONTROL_PORT 5566 
+#define NETSIGHT_HISTORY_PORT 5567
+
 #define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
 #define HEARTBEAT_INTERVAL  1000    //  msecs
 #define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
@@ -142,10 +145,11 @@ class DeleteFilterReplyMessage: public Message {
 class GetFiltersRequestMessage: public Message {
     private:
     public:
-        GetFiltersRequestMessage()
+        GetFiltersRequestMessage(string data="")
         {
             type = GET_FILTERS_REQUEST;
             msg_j["type"] = V((u64)type);
+            msg_j["data"] = V(data);
         }
 };
 
@@ -159,6 +163,8 @@ class GetFiltersReplyMessage: public Message {
             for(int i = 0; i < filters.size(); i++) {
                 data.push_back(V(filters[i]));
             }
+
+            msg_j["type"] = V((u64)type);
             msg_j["data"] = V(data);
         }
 };
