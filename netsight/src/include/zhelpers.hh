@@ -211,27 +211,4 @@ s_console (const char *format, ...)
     printf ("\n");
 }
 
-//  ---------------------------------------------------------------------
-//  Signal handling
-//
-//  Call s_catch_signals() in your application at startup, and then exit
-//  your main loop if s_interrupted is ever 1. Works especially well with
-//  zmq_poll.
-
-static int s_interrupted = 0;
-static void s_signal_handler (int signal_value)
-{
-    s_interrupted = 1;
-}
-
-static void s_catch_signals ()
-{
-    struct sigaction action;
-    action.sa_handler = s_signal_handler;
-    action.sa_flags = 0;
-    sigemptyset (&action.sa_mask);
-    sigaction (SIGINT, &action, NULL);
-    sigaction (SIGTERM, &action, NULL);
-}
-
 #endif
