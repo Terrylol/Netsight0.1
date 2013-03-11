@@ -18,7 +18,10 @@ static int SKIP_ETHERNET = 0;
 
 using namespace std;
 
-NetSight::NetSight()
+NetSight::NetSight():
+    context(1), 
+    pub_sock(context, ZMQ_PUB), 
+    rep_sock(context, ZMQ_REP)
 {
     /* Database handler initialization */
     topo_db.set_db("ndb");
@@ -71,8 +74,9 @@ NetSight::interact()
         string input;
         cin.clear();
         cin.sync();
-        if (!getline(cin, input))
-            fprintf(stderr, "Error: Reading user input\n");
+        if (!getline(cin, input)) {
+            ERR("Error: Reading user input\n");
+        }
         DBG("Got input\n");
         if(input == "exit") {
             cleanup();
@@ -82,6 +86,48 @@ NetSight::interact()
             continue;
         regexes.push_back(input);
         filters.push_back(PacketHistoryFilter(input.c_str()));
+    }
+}
+
+void
+NetSight::serve()
+{
+    stringstream pub_ss, rep_ss;
+    rep_ss << "tcp://*:" << NETSIGHT_CONTROL_PORT;
+    pub_ss << "tcp://*:" << NETSIGHT_HISTORY_PORT;
+    pub_sock.bind(pub_ss.str().c_str());
+    rep_sock.bind(rep_ss.str().c_str());
+
+    zmq::pollitem_t items [] = {
+        { rep_sock, 0, ZMQ_POLLIN, 0 }
+    };
+
+    while(!s_interrupted) {
+        zmq::poll(&items [0], 1, POLL_TIMEOUT_MS * 1000);
+        if(items[0].revents & ZMQ_POLLIN) {
+            string message_str = s_recv(rep_sock);
+            stringstream ss(message_str);
+            picojson::value message_j;
+            string err = picojson::parse(message_j, ss);
+            MessageType msg_type = (MessageType) message_j.get("type").get<u64>();
+            switch(msg_type) {
+                case ECHO_REQUEST:
+                    DBG("Received ECHO_REQUEST message\n");
+                    break;
+                case ADD_FILTER_REQUEST:
+                    DBG("Received ADD_FILTER_REQUEST message\n");
+                    break;
+                case DELETE_FILTER_REQUEST:
+                    DBG("Received DELETE_FILTER_REQUEST message\n");
+                    break;
+                case GET_FILTERS_REQUEST:
+                    DBG("Received GET_FILTERS_REQUEST message\n");
+                    break;
+                default:
+                    ERR("Unexpected message type: %d\n", msg_type);
+                    break;
+            }
+        }
     }
 }
 
@@ -177,7 +223,7 @@ void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];     
 
     /* get network number and mask associated with capture device */
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
-        fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
+        ERR("Couldn't get netmask for device %s: %s\n",
                 dev, errbuf);
         net = 0;
         mask = 0;
@@ -191,26 +237,26 @@ void NetSight::sniff_pkts(const char *dev) { char errbuf[PCAP_ERRBUF_SIZE];     
     /* open capture device */
     postcard_handle = pcap_open_live(dev, SNAP_LEN, 1, 100, errbuf);
     if (postcard_handle == NULL) {
-        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+        ERR("Couldn't open device %s: %s\n", dev, errbuf);
         return;
     }
 
     /* make sure we're capturing on an Ethernet device [2] */
     if (pcap_datalink(postcard_handle) != DLT_EN10MB) {
-        fprintf(stderr, "%s is not an Ethernet\n", dev);
+        ERR("%s is not an Ethernet\n", dev);
         return;
     }
 
     /* compile the filter expression */
     if (pcap_compile(postcard_handle, &postcard_fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n",
+        ERR("Couldn't parse filter %s: %s\n",
                 filter_exp, pcap_geterr(postcard_handle));
         return;
     }
 
     /* apply the compiled filter */
     if (pcap_setfilter(postcard_handle, &postcard_fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n",
+        ERR("Couldn't install filter %s: %s\n",
                 filter_exp, pcap_geterr(postcard_handle));
         return;
     }
@@ -276,6 +322,7 @@ NetSight::sig_handler(int signum)
     switch(signum) {
         case SIGINT:
             DBG("Got SIGINT\n");
+            n.s_interrupted = true;
             n.cleanup();
             exit(EXIT_SUCCESS);
             break;
@@ -288,15 +335,15 @@ void
 NetSight::connect_db(string host)
 {
     if(!topo_db.connect(host)) {
-        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        ERR(AT "Could not connect to MongoDB: %s\n", host.c_str());
         exit(EXIT_FAILURE);
     }
     if(!ft_db.connect(host)) {
-        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        ERR(AT "Could not connect to MongoDB: %s\n", host.c_str());
         exit(EXIT_FAILURE);
     }
     if(!psid_db.connect(host)) {
-        fprintf(stderr, AT "Could not connect to MongoDB: %s\n", host.c_str());
+        ERR(AT "Could not connect to MongoDB: %s\n", host.c_str());
         exit(EXIT_FAILURE);
     }
 
@@ -356,4 +403,3 @@ NetSight::get_flow_entry(int dpid, int version, string &match, vector<string> &a
         DBG("Error: No matching flow-entry found...\n");
     }
 }
-

@@ -15,13 +15,20 @@
 #include "path_table.hh"
 #include "flow.hh"
 #include "types.hh"
+#include "helper.hh"
+#include "zhelpers.hh"
 
 #include "db_handler.hh"
 #include "filter/regexp.hh"
 #include "topo_sort/topo_sort.hh"
+#include "api/api.hh"
 
 #define ROUND_LENGTH 1000 //round length in ms
 #define PACKET_HISTORY_PERIOD 100 //packet history duration in ms
+
+#define NETSIGHT_CONTROL_PORT 5566 
+#define NETSIGHT_HISTORY_PORT 5567
+#define POLL_TIMEOUT_MS 100 //timeout zmq poll every 100ms
 
 using namespace std;
 
@@ -45,9 +52,14 @@ class NetSight {
         void read_psid_db();
         void get_flow_entry(int dpid, int version, string &match, vector<string> &actions);
 
+        /* API Sockets */
+        zmq::context_t context;
+        zmq::socket_t pub_sock;
+        zmq::socket_t rep_sock;
+        bool s_interrupted;
+
         /* Signals that are handled by various threads */
         sigset_t sigset;
-        pthread_t sig_handler_t;
 
         vector<string> regexes;
         vector<PacketHistoryFilter> filters;
@@ -77,6 +89,7 @@ class NetSight {
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
         void cleanup();
         void interact();
+        void serve();
 
     public:
         void start();
