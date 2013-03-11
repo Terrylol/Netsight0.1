@@ -1,5 +1,6 @@
 env = Environment(CCFLAGS='-O9 -std=c++0x',
-                    CPPPATH=['#netsight/src/include', '#netsight/src/api'])
+                    CPPPATH=['#netsight/src/include', '#netsight/src/api',
+                    '#netsight/apps/include'])
 
 Export('env')
 SConscript(['ndb/SConscript'])
