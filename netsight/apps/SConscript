@@ -1,0 +1,5 @@
+env = Environment(CCFLAGS='-O9 -std=c++0x',
+                    CPPPATH=['#netsight/src/include', '#netsight/src/api'])
+
+Export('env')
+SConscript(['ndb/SConscript'])

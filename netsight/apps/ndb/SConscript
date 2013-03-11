@@ -1,0 +1,17 @@
+Import('env');
+
+src_files = ['main.cc']
+
+lib_deps = []
+lib_paths = []
+
+lib_deps.append('netsightlib')
+lib_paths.append('#netsight/src/lib')
+
+lib_deps.append('netsightapi')
+lib_paths.append('#netsight/src/api')
+
+lib_deps += ['pcap', 'pthread', 'z', 'zmq']
+
+env.Program(target='ndb', source=src_files,
+            LIBS=lib_deps, LIBPATH=lib_paths)
