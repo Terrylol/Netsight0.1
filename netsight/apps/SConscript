@@ -1,6 +1,11 @@
-env = Environment(CCFLAGS='-O9 -std=c++0x',
+Import('debug')
+env = Environment(CCFLAGS=['-O9', '-std=c++0x'],
                     CPPPATH=['#netsight/src/include', '#netsight/src/api',
                     '#netsight/apps/include'])
+
+if debug:
+    env.Append(CCFLAGS='-g')
+    env.Append(CPPDEFINES='DEBUG')
 
 Export('env')
 SConscript(['ndb/SConscript'])

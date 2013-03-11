@@ -1,2 +1,10 @@
+AddOption('--dbg',
+    dest='debug',
+    action='store_true',
+    default=False
+    )
+debug = GetOption('debug')
+Export('debug')
+
 SConscript(['src/SConscript', 'test/SConscript', 'apps/SConscript'])
 

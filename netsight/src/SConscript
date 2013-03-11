@@ -1,8 +1,8 @@
+Import('debug')
 env = Environment(CCFLAGS=['-O9', '-std=c++0x'],
                     CPPPATH=['#netsight/src/include'])
 
-debug = ARGUMENTS.get('debug', 0)
-if int(debug):
+if debug:
     env.Append(CCFLAGS='-g')
     env.Append(CPPDEFINES='DEBUG')
 
