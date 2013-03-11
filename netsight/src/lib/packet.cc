@@ -1,5 +1,6 @@
 #include "packet.hh"
 #include "helper.hh"
+#include "types.hh"
 
 /* Local variables */
 map<u16, string> ETHERTYPE_TO_STRING;
@@ -731,6 +732,22 @@ Packet::hdr_size()
             break;
     }
     return size;
+}
+
+JSON
+Packet::json()
+{
+    char *hex = (char *) malloc(2*PACKET_BUFF_SIZE + 1);
+    hexify_packet(buff, hex, PACKET_BUFF_SIZE);
+
+    JSON ts_j;
+    ts_j["tv_sec"] = V((u64)ts.tv_sec);
+    ts_j["tv_usec"] = V((u64)ts.tv_usec);
+
+    JSON j;
+    j["buff"] = V(hex);
+    j["timestamp"] = V(ts_j);
+    return j;
 }
 
 /* Other functions */

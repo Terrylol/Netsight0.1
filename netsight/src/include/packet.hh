@@ -250,6 +250,7 @@ struct Packet {
     u16 tp_dst();
     u16 infer_len();
     u16 hdr_size();
+    JSON json();
 };
 
 void packet_init(); 

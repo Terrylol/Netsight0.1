@@ -32,6 +32,7 @@ class PostcardNode {
         int get_outport();
         int get_version();
         string str();
+        JSON json();
 };
 
 class PostcardList {
@@ -65,6 +66,7 @@ class PostcardList {
         { insert(p, NULL); }
         void clear();
         string str();
+        JSON json();
 };
 
 #endif //POSTCARD_LIST_HH

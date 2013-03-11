@@ -38,6 +38,7 @@ PostcardNode::get_version()
     version = version >> ((sizeof(version) - VERSION_TAG_LEN)*8);
     return (int)version;
 }
+
 string 
 PostcardNode::str()
 {
@@ -50,6 +51,18 @@ PostcardNode::str()
     ss << "\t" << "inport: " << inport << endl;
     ss << "\t" << "outport: " << outport << endl;
     return ss.str();
+}
+
+JSON
+PostcardNode::json()
+{
+    JSON j;
+    j["dpid"] = V((u64)dpid);
+    j["inport"] = V((u64)inport);
+    j["outport"] = V((u64)outport);
+    j["version"] = V((u64)version);
+    j["packet"] = V(pkt->json());
+    return j;
 }
 
 /*
@@ -129,4 +142,18 @@ PostcardList::str()
         pn = pn->next;
     }
     return s;
+}
+
+JSON 
+PostcardList::json()
+{
+    JSON j;
+    vector<picojson::value> v;
+    PostcardNode *pn = head;
+    while(pn) {
+        v.push_back(V(pn->json()));
+    }
+
+    j["postcard_list"] = V(v);
+    return j;
 }
