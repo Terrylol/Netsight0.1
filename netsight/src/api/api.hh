@@ -36,6 +36,10 @@ Frame1: Matched PHF (including the terminating NULL character)
 Frame2: JSON-serialized Packet History
 */
 
+#define HEARTBEAT_LIVENESS  3       //  3-5 is reasonable
+#define HEARTBEAT_INTERVAL  1000    //  msecs
+#define HEARTBEAT_EXPIRY    HEARTBEAT_INTERVAL * HEARTBEAT_LIVENESS
+
 using namespace std;
 
 enum MessageType {
@@ -64,20 +68,22 @@ class Message {
 class EchoRequestMessage: public Message {
     private:
     public:
-        EchoRequestMessage()
+        EchoRequestMessage(string data="")
         {
             type = ECHO_REQUEST;
             msg_j["type"] = V((u64)type);
+            msg_j["data"] = V(data);
         }
 };
 
 class EchoReplyMessage: public Message {
     private:
     public:
-        EchoReplyMessage()
+        EchoReplyMessage(string data="")
         {
             type = ECHO_REPLY;
             msg_j["type"] = V((u64)type);
+            msg_j["data"] = V(data);
         }
 };
 
