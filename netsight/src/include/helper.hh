@@ -41,21 +41,33 @@
 #define AT __FILE__ ":" TOSTRING(__LINE__)
 
 #ifdef DEBUG
-# define DBG(...) debug(AT, __VA_ARGS__)
+# define DBG(...) print_debug(AT, __VA_ARGS__)
 #else
 # define DBG(...)
 #endif
 
+#define ERR(...) print_error(__VA_ARGS__)
+
 using namespace std;
 
-static inline void debug(const char *location, const char *msg, ...)
+static inline void print_debug(const char *location, const char *msg, ...)
 {
     va_list args;
     va_start(args, msg);
     string s = string(ANSI_COLOR_YELLOW) + location + ": " + msg + ANSI_COLOR_RESET;
     vprintf(s.c_str(), args);
     fflush(stdout);
-    va_end (args);
+    va_end(args);
+}
+
+static inline void print_error(const char *msg, ...)
+{
+    va_list args;
+    va_start(args, msg);
+    string s = string(ANSI_COLOR_RED) + msg + ANSI_COLOR_RESET;
+    vfprintf(stderr, s.c_str(), args);
+    fflush(stderr);
+    va_end(args);
 }
 
 u64 get_file_size(const char *filename);
