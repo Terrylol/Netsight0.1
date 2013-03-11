@@ -25,7 +25,7 @@ class NetSightApp {
         NetSightApp(string host="localhost"):
             context(1),
             sub_sock(context, ZMQ_SUB), 
-            req_sock(context, ZMQ_REQ),
+            req_sock(context, ZMQ_DEALER),
             netsight_host(host)
             { }
 
