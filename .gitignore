@@ -8,3 +8,4 @@
 netsight/src/filter/parse.tab.cc
 netsight/src/netsight
 netsight/test/test_netsight
+netsight/apps/ndb/ndb
