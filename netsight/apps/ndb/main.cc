@@ -15,6 +15,5 @@ int main(int argc, char **argv)
 {
     NDB &ndb = NDB::get_instance();
     ndb.start();
-    ndb.interact();
     return 0;
 }
