@@ -1,6 +1,6 @@
 Import('env');
 
-src_files = ['main.cc']
+src_files = ['main.cc', 'ndb.cc']
 
 lib_deps = []
 lib_paths = []
