@@ -36,23 +36,19 @@ class NDB {
                 sigaddset(&sigset, SIGINT);
             }
 
-        ~NDB()
-        {
-            char *ret;
-            s_interrupted = true;
-            DBG("Shutting down NDB. Waiting for the control thread to join...\n");
-            pthread_join(control_t, (void **)&ret);
-            DBG("Shutting down NDB. Waiting for the history thread to join...\n");
-            pthread_join(history_t, (void **)&ret);
-            DBG("Bye!\n");
-        }
-
         /* signal handler */
         static void sig_handler(int signum)
         {
             NDB &n = NDB::get_instance();
-            if(signum == SIGINT || signum == SIGTERM)
-                n.s_interrupted = true;
+            switch(signum) {
+                case SIGINT:
+                    n.cleanup();
+                    DBG("Bye!\n");
+                    exit(EXIT_SUCCESS);
+                    break;
+                default:
+                    DBG("Unknexpected signal: %d\n", signum);
+            }
         }
 
         static void *control_channel_thread(void *args)
@@ -61,6 +57,10 @@ class NDB {
 
             // ZMQ socket (private to thread)
             zmq::socket_t req_sock(n.context, ZMQ_DEALER);
+            //  Configure socket to not wait at close time
+            int linger = 0;
+            req_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
+            
 
             stringstream req_ss;
             req_ss << "tcp://" << n.netsight_host << ":" << NETSIGHT_CONTROL_PORT;
@@ -70,6 +70,8 @@ class NDB {
                 { req_sock, 0, ZMQ_POLLIN, 0 },
             };
             while(!(n.s_interrupted)) {
+                pthread_testcancel();
+
                 struct timeval start_t, end_t;
                 gettimeofday(&start_t, NULL);
 
@@ -77,6 +79,7 @@ class NDB {
                 zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL);
 
                 if(items[0].revents & ZMQ_POLLIN) {
+                    // TODO: handle incoming control messages
                 }
 
                 // Sleep for the remainder of the period
@@ -99,6 +102,9 @@ class NDB {
 
             // ZMQ socket (private to thread)
             zmq::socket_t sub_sock(n.context, ZMQ_SUB);
+            //  Configure socket to not wait at close time
+            int linger = 0;
+            sub_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
 
             stringstream sub_ss;
             sub_ss << "tcp://" << n.netsight_host << ":" << NETSIGHT_HISTORY_PORT;
@@ -108,13 +114,26 @@ class NDB {
                 { sub_sock , 0, ZMQ_POLLIN, 0 },
             };
             while(!(n.s_interrupted)) {
+                pthread_testcancel();
 
                 // Poll with a timeout of HEARTBEAT_INTERVAL
                 zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL);
 
                 if(items[0].revents & ZMQ_POLLIN) {
+                    //TODO: Handle matching packet histories
                 }
             }
+        }
+
+        void cleanup()
+        {
+            void* ret = NULL;
+            pthread_cancel(control_t);
+            pthread_cancel(history_t);
+            pthread_join(control_t, &ret);
+            pthread_join(history_t, &ret);
+
+            DBG("\nCleanup complete.\n");
         }
 
     public:
@@ -158,6 +177,7 @@ class NDB {
                 DBG("Got input\n");
                 if(input == "exit") {
                     s_interrupted = true;
+                    cleanup();
                     continue;
                 }
                 else if(input == "") {
