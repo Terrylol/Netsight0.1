@@ -81,7 +81,7 @@ class NDB {
 
                 // Sleep for the remainder of the period
                 gettimeofday(&end_t, NULL);
-                double sleep_time = diff_time_ms(end_t, start_t);
+                double sleep_time = HEARTBEAT_INTERVAL - diff_time_ms(end_t, start_t);
                 s_sleep((int)sleep_time);
 
                 // Send out an ECHO_REQUEST
