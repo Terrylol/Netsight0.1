@@ -54,7 +54,31 @@ NDB::control_channel_thread(void *args)
         zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL);
 
         if(items[0].revents & ZMQ_POLLIN) {
-            // TODO: handle incoming control messages
+            string message_str = s_recv(req_sock);
+            stringstream ss(message_str);
+            picojson::value message_j;
+            string err = picojson::parse(message_j, ss);
+            MessageType msg_type = (MessageType) message_j.get("type").get<u64>();
+            string msg_data = message_j.get("data").get<string>();
+
+            switch(msg_type) {
+                case ECHO_REPLY:
+                    DBG("Received ECHO_REPLY message with data: %s\n", msg_data.c_str());
+                    break;
+                case ADD_FILTER_REPLY:
+                    DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+                    break;
+                case DELETE_FILTER_REPLY:
+                    DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+                    break;
+                case GET_FILTERS_REPLY:
+                    DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.c_str());
+                    // TODO: implement the functionality
+                    break;
+                default:
+                    ERR("Unexpected message type: %d\n", msg_type);
+                    break;
+            }
         }
 
         // Sleep for the remainder of the period
