@@ -134,11 +134,20 @@ inline std::string
 s_set_id (zmq::socket_t & socket)
 {
     std::stringstream ss;
-    ss << std::hex << std::uppercase
-       << std::setw(4) << std::setfill('0') << within (0x10000) << "-"
-       << std::setw(4) << std::setfill('0') << within (0x10000);
+    time_t t = time(NULL);
+    pid_t pid = getpid();
+    ss << pid << ":" << t;
     socket.setsockopt(ZMQ_IDENTITY, ss.str().c_str(), ss.str().length());
     return ss.str();
+}
+
+inline std::string 
+s_get_id(zmq::socket_t &socket)
+{
+    char id_str[256];
+    unsigned long id_len;
+    socket.getsockopt(ZMQ_IDENTITY, &id_str, &id_len);
+    return string(id_str);
 }
 
 //  Report 0MQ version number
