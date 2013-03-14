@@ -32,6 +32,8 @@ NDB::control_channel_thread(void *args)
 
     // ZMQ socket (private to thread)
     zmq::socket_t req_sock(n.context, ZMQ_DEALER);
+    // Set random ID to the socket
+    string req_sock_id = s_set_id(req_sock);
     //  Configure socket to not wait at close time
     int linger = 0;
     req_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
@@ -51,14 +53,16 @@ NDB::control_channel_thread(void *args)
         gettimeofday(&start_t, NULL);
 
         // Poll with a timeout of HEARTBEAT_INTERVAL
-        zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL);
+        zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL * 1000);
 
         if(items[0].revents & ZMQ_POLLIN) {
             string message_str = s_recv(req_sock);
+            assert(message_str.empty());
+            message_str = s_recv(req_sock);
             stringstream ss(message_str);
             picojson::value message_j;
             string err = picojson::parse(message_j, ss);
-            MessageType msg_type = (MessageType) message_j.get("type").get<u64>();
+            MessageType msg_type = (MessageType) message_j.get("type").get<double>();
             string msg_data = message_j.get("data").get<string>();
 
             switch(msg_type) {
@@ -91,7 +95,11 @@ NDB::control_channel_thread(void *args)
         ss << time(NULL);
         EchoRequestMessage msg(ss.str());
         DBG("Sending ECHO_REQUEST with timestamp %s\n", ss.str().c_str());
-        bool ret = s_send(req_sock, msg.serialize());
+
+        // req_sock is a dealer, send an empty string first, followed by the
+        // real message
+        bool ret = s_sendmore(req_sock, "");
+        ret = s_send(req_sock, msg.serialize());
     }
 }
 
@@ -117,7 +125,7 @@ NDB::history_channel_thread(void *args)
         pthread_testcancel();
 
         // Poll with a timeout of HEARTBEAT_INTERVAL
-        zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL);
+        zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL * 1000);
 
         if(items[0].revents & ZMQ_POLLIN) {
             //TODO: Handle matching packet histories

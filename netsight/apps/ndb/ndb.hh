@@ -2,6 +2,7 @@
 #define NDB_HH
 
 #include <signal.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <vector>
