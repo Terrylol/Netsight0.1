@@ -21,7 +21,7 @@ using namespace std;
 NetSight::NetSight():
     context(1), 
     pub_sock(context, ZMQ_PUB), 
-    rep_sock(context, ZMQ_REP)
+    rep_sock(context, ZMQ_ROUTER)
 {
     /* Database handler initialization */
     topo_db.set_db("ndb");
@@ -61,9 +61,11 @@ NetSight::start()
     /* create a signal handler */
     signal(SIGINT, sig_handler);
 
-    interact();
+    //interact();
+    serve();
 }
 
+/*
 void
 NetSight::interact()
 {
@@ -88,50 +90,68 @@ NetSight::interact()
         filters.push_back(PacketHistoryFilter(input.c_str()));
     }
 }
+*/
 
 void
 NetSight::serve()
 {
-    stringstream pub_ss, rep_ss;
+    int linger = 0;
+    stringstream rep_ss;
     rep_ss << "tcp://*:" << NETSIGHT_CONTROL_PORT;
-    pub_ss << "tcp://*:" << NETSIGHT_HISTORY_PORT;
-    pub_sock.bind(pub_ss.str().c_str());
     rep_sock.bind(rep_ss.str().c_str());
+    rep_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
 
     zmq::pollitem_t items [] = {
         { rep_sock, 0, ZMQ_POLLIN, 0 }
     };
 
     while(!s_interrupted) {
-        zmq::poll(&items [0], 1, POLL_TIMEOUT_MS * 1000);
+        zmq::poll(&items [0], 1, HEARTBEAT_INTERVAL * 1000);
         if(items[0].revents & ZMQ_POLLIN) {
+            DBG("Received message on the control channel...\n");
+            string client_id = s_recv(rep_sock);
+            string delimiter_str = s_recv(rep_sock);
+            assert(delimiter_str.empty());
             string message_str = s_recv(rep_sock);
+            DBG("message_str: %s\n", message_str.c_str());
             stringstream ss(message_str);
             picojson::value message_j;
             string err = picojson::parse(message_j, ss);
-            MessageType msg_type = (MessageType) message_j.get("type").get<u64>();
+            MessageType msg_type = (MessageType) message_j.get("type").get<double>(); 
             string msg_data = message_j.get("data").get<string>();
+            DBG("msg_type: %d, msg_data: %s\n", msg_type, msg_data.c_str());
+
+            if(filters.find(client_id) == filters.end()) {
+                gettimeofday(&(filters[client_id].last_contact_time), NULL);
+                filters[client_id].filter_vec = vector<PacketHistoryFilter>();
+            }
 
             /* variables need to be initialized before switch statement */
-            EchoReplyMessage rep_msg(msg_data);
-            switch(msg_type) {
-                case ECHO_REQUEST:
+            if(msg_type == ECHO_REQUEST) {
                     DBG("Received ECHO_REQUEST message\n");
                     DBG("Sending ECHO_REPLY message\n");
-                    s_send(rep_sock, rep_msg.serialize());
-                    break;
-                case ADD_FILTER_REQUEST:
-                    DBG("Received ADD_FILTER_REQUEST message\n");
-                    break;
-                case DELETE_FILTER_REQUEST:
+                    EchoReplyMessage echo_rep_msg(msg_data);
+                    s_sendmore(rep_sock, client_id);
+                    s_sendmore(rep_sock, "");
+                    s_send(rep_sock, echo_rep_msg.serialize());
+            }
+            else if (msg_type == ADD_FILTER_REQUEST) {
+                DBG("Received ADD_FILTER_REQUEST message\n");
+                PacketHistoryFilter phf(message_str.c_str());
+                (filters[client_id].filter_vec).push_back(phf);
+                s_sendmore(rep_sock, client_id);
+                s_sendmore(rep_sock, "");
+                AddFilterReplyMessage af_rep_msg(message_str, true);
+                s_send(rep_sock, af_rep_msg.serialize());
+            }
+            else if (msg_type == DELETE_FILTER_REQUEST) {
                     DBG("Received DELETE_FILTER_REQUEST message\n");
-                    break;
-                case GET_FILTERS_REQUEST:
+            }
+            else if (msg_type == GET_FILTERS_REQUEST) {
                     DBG("Received GET_FILTERS_REQUEST message\n");
-                    break;
-                default:
+            }
+            else {
                     ERR("Unexpected message type: %d\n", msg_type);
-                    break;
             }
         }
     }
@@ -161,6 +181,12 @@ NetSight::history_worker(void *args)
 void*
 NetSight::run_history_worker(void *args)
 {
+    stringstream pub_ss;
+    int linger = 0;
+    pub_ss << "tcp://*:" << NETSIGHT_HISTORY_PORT;
+    pub_sock.bind(pub_ss.str().c_str());
+    pub_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
+
     struct timeval start_t, end_t;
     while(true) {
         pthread_testcancel();
@@ -200,10 +226,14 @@ NetSight::run_history_worker(void *args)
             if(ts_diff > PACKET_HISTORY_PERIOD) {
                 PostcardList &pl = it->second;
                 topo_sort(&pl, topo);
-                for(int i = 0; i < filters.size(); i++) {
-                    if(filters[i].match(pl)) {
-                        DBG("MATCHED REGEX: %s\n", filters[i].str().c_str());
-                        printf(ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET "\n", pl.str().c_str());
+                EACH(app_it, filters) {
+                    client_data &c = app_it->second;
+                    vector<PacketHistoryFilter> &filter_vec = c.filter_vec;
+                    for(int i = 0; i < filter_vec.size(); i++) {
+                        if(filter_vec[i].match(pl)) {
+                            DBG("MATCHED REGEX: %s\n", filter_vec[i].str().c_str());
+                            printf(ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET "\n", pl.str().c_str());
+                        }
                     }
                 }
                 pl.clear();

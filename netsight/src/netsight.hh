@@ -58,8 +58,16 @@ class NetSight {
         /* Signals that are handled by various threads */
         sigset_t sigset;
 
-        vector<string> regexes;
-        vector<PacketHistoryFilter> filters;
+        /*vector<string> regexes;
+        vector<PacketHistoryFilter> filters;*/
+        //void interact();
+        
+        struct client_data {
+            struct timeval last_contact_time;
+            vector<PacketHistoryFilter> filter_vec;
+        };
+
+        unordered_map<string, client_data> filters;
         PostcardList stage;
         PathTable path_table;
         pthread_mutex_t stage_lock;
@@ -85,7 +93,6 @@ class NetSight {
         void sniff_pkts(const char *dev);
         void postcard_handler(const struct pcap_pkthdr *header, const u_char *packet);
         void cleanup();
-        void interact();
         void serve();
 
     public:
