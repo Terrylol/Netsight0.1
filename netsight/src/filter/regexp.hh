@@ -161,6 +161,11 @@ class PacketHistoryFilter {
             strcpy(regex, phf.regex);
         }
 
+        bool operator==(const char *re) const
+        {
+            return (strcmp(regex, re) == 0);
+        }
+
         void clear()
         {
             free_reg(re);

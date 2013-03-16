@@ -63,6 +63,15 @@ s_recv (zmq::socket_t & socket) {
     return std::string(static_cast<char*>(message.data()), message.size());
 }
 
+static std::string
+s_recv_envelope(zmq::socket_t &socket, std::string &client_id) {
+    client_id = s_recv(socket);
+    std::string delimiter_str = s_recv(socket);
+    assert(delimiter_str.empty());
+    std::string message_str = s_recv(socket);
+    return message_str;
+}
+
 //  Convert string to 0MQ string and send to socket
 static bool
 s_send (zmq::socket_t & socket, const std::string & string) {
@@ -83,6 +92,15 @@ s_sendmore (zmq::socket_t & socket, const std::string & string) {
 
     bool rc = socket.send (message, ZMQ_SNDMORE);
     return (rc);
+}
+
+static bool
+s_send_envelope(zmq::socket_t &socket, const std::string &client_id, const std::string &msg) {
+    bool ret = true;
+    ret &= s_sendmore(socket, client_id);
+    ret &= s_sendmore(socket, "");
+    ret &= s_send(socket, msg);
+    return ret;
 }
 
 //  Receives all message parts from socket, prints neatly

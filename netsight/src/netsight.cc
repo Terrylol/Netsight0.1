@@ -109,10 +109,8 @@ NetSight::serve()
         zmq::poll(&items [0], 1, HEARTBEAT_INTERVAL * 1000);
         if(items[0].revents & ZMQ_POLLIN) {
             DBG("Received message on the control channel...\n");
-            string client_id = s_recv(rep_sock);
-            string delimiter_str = s_recv(rep_sock);
-            assert(delimiter_str.empty());
-            string message_str = s_recv(rep_sock);
+            string client_id;
+            string message_str = s_recv_envelope(rep_sock, client_id);
             DBG("message_str: %s\n", message_str.c_str());
             stringstream ss(message_str);
             picojson::value message_j;
@@ -128,32 +126,51 @@ NetSight::serve()
 
             /* variables need to be initialized before switch statement */
             if(msg_type == ECHO_REQUEST) {
-                    DBG("Received ECHO_REQUEST message\n");
-                    DBG("Sending ECHO_REPLY message\n");
-                    EchoReplyMessage echo_rep_msg(msg_data);
-                    s_sendmore(rep_sock, client_id);
-                    s_sendmore(rep_sock, "");
-                    s_send(rep_sock, echo_rep_msg.serialize());
+                DBG("Received ECHO_REQUEST message\n");
+                DBG("Sending ECHO_REPLY message\n");
+                EchoReplyMessage echo_rep_msg(msg_data);
+                s_send_envelope(rep_sock, client_id, echo_rep_msg.serialize());
             }
             else if (msg_type == ADD_FILTER_REQUEST) {
                 DBG("Received ADD_FILTER_REQUEST message\n");
                 PacketHistoryFilter phf(message_str.c_str());
                 (filters[client_id].filter_vec).push_back(phf);
-                s_sendmore(rep_sock, client_id);
-                s_sendmore(rep_sock, "");
+                printf("Added filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
                 AddFilterReplyMessage af_rep_msg(message_str, true);
-                s_send(rep_sock, af_rep_msg.serialize());
+                s_send_envelope(rep_sock, client_id, af_rep_msg.serialize());
             }
             else if (msg_type == DELETE_FILTER_REQUEST) {
-                    DBG("Received DELETE_FILTER_REQUEST message\n");
+                DBG("Received DELETE_FILTER_REQUEST message\n");
+                vector<PacketHistoryFilter>::iterator it = find((filters[client_id]).filter_vec.begin(), (filters[client_id]).filter_vec.end(), message_str.c_str());
+                if(it != (filters[client_id]).filter_vec.end()) {
+                    printf("Deleted filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
+                    (filters[client_id]).filter_vec.erase(it);
+                    DeleteFilterReplyMessage df_rep_msg(message_str, true);
+                    s_send_envelope(rep_sock, client_id, df_rep_msg.serialize());
+                }
+                else {
+                    ERR("Could not find filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
+                    DeleteFilterReplyMessage df_rep_msg(message_str, false);
+                    s_send_envelope(rep_sock, client_id, df_rep_msg.serialize());
+                }
             }
             else if (msg_type == GET_FILTERS_REQUEST) {
-                    DBG("Received GET_FILTERS_REQUEST message\n");
+                DBG("Received GET_FILTERS_REQUEST message\n");
+                vector<string> fvec;
+                vector<PacketHistoryFilter> &v = (filters[client_id]).filter_vec;
+                for(int i = 0; i < v.size(); i++) {
+                    fvec.push_back((v[i]).str());
+                }
+
+                GetFiltersReplyMessage gf_rep_msg(fvec);
+                s_send_envelope(rep_sock, client_id, gf_rep_msg.serialize());
             }
             else {
-                    ERR("Unexpected message type: %d\n", msg_type);
+                ERR("Unexpected message type: %d\n", msg_type);
             }
         }
+
+        /* Handle timeouts */
     }
 }
 
