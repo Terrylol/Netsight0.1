@@ -30,14 +30,13 @@ NDB::control_channel_thread(void *args)
 {
     NDB &n = NDB::get_instance();
 
-    // ZMQ socket (private to thread)
+    // ZMQ socket (should be private to thread)
     zmq::socket_t req_sock(n.context, ZMQ_DEALER);
     // Set random ID to the socket
     string req_sock_id = s_set_id(req_sock);
     //  Configure socket to not wait at close time
     int linger = 0;
     req_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
-
 
     stringstream req_ss;
     req_ss << "tcp://" << n.netsight_host << ":" << NETSIGHT_CONTROL_PORT;
@@ -60,35 +59,63 @@ NDB::control_channel_thread(void *args)
             assert(message_str.empty());
             message_str = s_recv(req_sock);
             stringstream ss(message_str);
-            picojson::value message_j;
+            picojson::value message_j, filters_j;
             string err = picojson::parse(message_j, ss);
             MessageType msg_type = (MessageType) message_j.get("type").get<double>();
             string msg_data = message_j.get("data").get<string>();
 
-            switch(msg_type) {
-                case ECHO_REPLY:
-                    DBG("Received ECHO_REPLY message with data: %s\n", msg_data.c_str());
-                    break;
-                case ADD_FILTER_REPLY:
-                    DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.c_str());
-                    break;
-                case DELETE_FILTER_REPLY:
-                    DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.c_str());
-                    break;
-                case GET_FILTERS_REPLY:
-                    DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.c_str());
-                    // TODO: implement the functionality
-                    break;
-                default:
-                    ERR("Unexpected message type: %d\n", msg_type);
-                    break;
+            if(msg_type == ECHO_REPLY) {
+                DBG("Received ECHO_REPLY message with data: %s\n", msg_data.c_str());
             }
+            if(msg_type == ADD_FILTER_REPLY) {
+                DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+            }
+            if(msg_type == DELETE_FILTER_REPLY) {
+                DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+            }
+            if(msg_type == GET_FILTERS_REPLY) {
+                DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.c_str());
+                string &filters_str = msg_data;
+                stringstream ss(filters_str);
+                picojson::value filters_j;
+                string err = picojson::parse(filters_j, ss);
+                picojson::array &filters_list = filters_j.get<picojson::array>();
+                for (picojson::array::iterator iter = filters_list.begin(); iter != filters_list.end(); ++iter) {
+                    string f = (*iter).get<string>();
+                    print_color(ANSI_COLOR_BLUE, "\t\"%s\"\n", f.c_str());
+                }
+            }
+            else {
+                ERR("Unexpected message type: %d\n", msg_type);
+            }
+        }
+
+        /* Send any outstanding messages */
+        if(n.ctrl_cmd_queue.size() > 0) {
+            pthread_mutex_lock(&n.ctrl_cmd_lock);
+            for(int i = 0; i < n.ctrl_cmd_queue.size(); i++) {
+                string &cmd = n.ctrl_cmd_queue[i][0];
+                string &arg = n.ctrl_cmd_queue[i][1];
+                if(cmd == "add") {
+                    add_filter_noblock(arg, req_sock);
+                }
+                else if(cmd == "del") {
+                    delete_filter_noblock(arg, req_sock);
+                }
+                else if(cmd == "list") {
+                    get_filters_noblock(req_sock);
+                }
+            }
+            n.ctrl_cmd_queue.clear();
+            pthread_mutex_unlock(&n.ctrl_cmd_lock);
         }
 
         // Sleep for the remainder of the period
         gettimeofday(&end_t, NULL);
         double sleep_time = HEARTBEAT_INTERVAL - diff_time_ms(end_t, start_t);
-        s_sleep((int)sleep_time);
+        if(sleep_time > 0) {
+            s_sleep((int)sleep_time);
+        }
 
         // Send out an ECHO_REQUEST
         stringstream ss;
@@ -108,7 +135,7 @@ NDB::history_channel_thread(void *args)
 {
     NDB &n = NDB::get_instance();
 
-    // ZMQ socket (private to thread)
+    // ZMQ socket (should be private to thread)
     zmq::socket_t sub_sock(n.context, ZMQ_SUB);
     //  Configure socket to not wait at close time
     int linger = 0;
@@ -129,6 +156,26 @@ NDB::history_channel_thread(void *args)
 
         if(items[0].revents & ZMQ_POLLIN) {
             //TODO: Handle matching packet histories
+        }
+
+        /* Subscribe/Unsubscribe any outstanding filters */
+        if(n.hist_cmd_queue.size() > 0) {
+            pthread_mutex_lock(&n.hist_cmd_lock);
+            for(int i = 0; i < n.hist_cmd_queue.size(); i++) {
+                string &cmd = n.hist_cmd_queue[i][0];
+                string &arg = n.hist_cmd_queue[i][1];
+                if(cmd == "add") {
+                    subscribe_filter(arg, sub_sock);
+                }
+                else if(cmd == "del") {
+                    unsubscribe_filter(arg, sub_sock);
+                }
+                else {
+                    ERR("Unexpected command: %s\n", cmd.c_str());
+                }
+            }
+            n.hist_cmd_queue.clear();
+            pthread_mutex_unlock(&n.hist_cmd_lock);
         }
     }
 }
@@ -179,7 +226,39 @@ NDB::interact()
             ERR("Error: Reading user input\n");
         }
         DBG("Got input\n");
-        if(input == "exit") {
+        size_t command_pos = input.find(' ');
+        string command = input.substr(0, command_pos);
+        string arg = "";
+        if(command == "add" || command == "del") {
+            if(command_pos == string::npos) {
+                ERR("Incomplete command: \"%s\"\n", input.c_str());
+                continue;
+            }
+            string arg = input.substr(command_pos + 1);
+            int last_arg_char = arg.size() - 1;
+            if((arg[0] == '\"' and arg[last_arg_char] == '\"') or (arg[0] == '\'' and arg[last_arg_char] == '\'')) {
+                arg = arg.substr(1, arg.size() - 2);
+            }
+            /*else {
+                ERR("Command error: \"%s\"\n", input);
+                ERR("Could not match quotes for argument: \"%s\"\n", arg);
+                continue;
+            }*/
+        }
+        else if(command == "list") {
+            arg = "";
+        }
+        else if(command == "help") {
+            printf("Available commands: \n\
+                        add \"<PHF>\"   \n\
+                        del \"<PHF>\"   \n\
+                        list            \n\
+                        exit            \n\
+                        help            \n\
+                    ");
+            continue;
+        }
+        else if(command == "exit") {
             s_interrupted = true;
             cleanup();
             continue;
@@ -187,7 +266,25 @@ NDB::interact()
         else if(input == "") {
             continue;
         }
-        regexes.push_back(input);
+        else {
+            ERR("Unrecognized command: \"%s\"\n", input.c_str());
+            continue;
+        }
+
+        /* Add the new parsed command to ctrl_cmd_queue */
+        vector<string> v;
+        v.push_back(command);
+        v.push_back(arg);
+        pthread_mutex_lock(&ctrl_cmd_lock);
+        ctrl_cmd_queue.push_back(v);
+        pthread_mutex_unlock(&ctrl_cmd_lock);
+
+        /* Add the new parsed command to hist_cmd_queue */
+        if(command == "add" || command == "del") {
+            pthread_mutex_lock(&hist_cmd_lock);
+            hist_cmd_queue.push_back(v);
+            pthread_mutex_unlock(&hist_cmd_lock);
+        }
     }
 }
 

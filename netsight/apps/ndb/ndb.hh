@@ -15,8 +15,6 @@ using namespace std;
 
 class NDB {
     private:
-        vector<string> regexes;
-
         /* ZMQ Threads */
         pthread_t control_t;
         pthread_t history_t;
@@ -27,6 +25,14 @@ class NDB {
         bool s_interrupted;
 
         string netsight_host;
+
+        /* Shared datastructure and mutex between main and control threads */
+        pthread_mutex_t ctrl_cmd_lock;
+        vector<vector<string> > ctrl_cmd_queue;
+
+        /* Shared datastructure and mutex between main and history threads */
+        pthread_mutex_t hist_cmd_lock;
+        vector<vector<string> > hist_cmd_queue;
 
         /* Signals that are handled by various threads */
         sigset_t sigset;
