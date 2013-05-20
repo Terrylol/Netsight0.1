@@ -70,6 +70,16 @@ static inline void print_error(const char *msg, ...)
     va_end(args);
 }
 
+static inline void print_color(const char *color, const char *msg, ...)
+{
+    va_list args;
+    va_start(args, msg);
+    string s = string(color) + msg + ANSI_COLOR_RESET;
+    vprintf(s.c_str(), args);
+    fflush(stdout);
+    va_end(args);
+}
+
 u64 get_file_size(const char *filename);
 string ntos(u64 num);
 void print_proto_stats(string parent, struct proto_stats *dict, int num_elem,
