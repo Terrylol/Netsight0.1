@@ -1,0 +1,29 @@
+Installing NetSight on a Ubuntu 12.10 VM:
+=========================================
+
+Install all the dependencies:
+$ ./INSTALL_DEPS.sh
+
+Compile NetSight code:
+$ scons --dbg
+
+Dependencies:
+=============
+
+- OpenFaucet
+- Python deps: python-twisted, termcolor
+- Wireshark and tcpdump
+- MongoDB + deps: mongodb, pymongo, bson, libmongo-client-dev
+- Boost: libboost-all-dev 
+- libpcap: libpcap-dev 
+- dpkt
+- gdb
+- scons
+- ZeroMQ: libzmq-dev
+
+Additional dependencies for Mininet-based demo:
+===============================================
+- Mininet 2.0 + dependencies (like Open vSwitch)
+- POX
+- RipL/RipL-POX
+- GNU Screen
