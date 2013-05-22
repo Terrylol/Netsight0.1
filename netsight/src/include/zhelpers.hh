@@ -163,7 +163,7 @@ inline std::string
 s_get_id(zmq::socket_t &socket)
 {
     char id_str[256];
-    unsigned long id_len;
+    size_t id_len;
     socket.getsockopt(ZMQ_IDENTITY, &id_str, &id_len);
     return string(id_str);
 }
