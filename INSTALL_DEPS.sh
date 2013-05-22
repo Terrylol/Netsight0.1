@@ -26,7 +26,7 @@ sudo service openvswitch-controller stop
 sudo update-rc.d openvswitch-controller disable
 
 echo "Installing OpenFaucet from source"
-git clone git@github.com:nikhilh/openfaucet.git
+git clone git://github.com/nikhilh/openfaucet.git
 cd openfaucet
 ./bootstrap.sh
 ./configure
