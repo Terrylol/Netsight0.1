@@ -250,6 +250,8 @@ NetSight::run_history_worker(void *args)
                         if(filter_vec[i].match(pl)) {
                             DBG("MATCHED REGEX: %s\n", filter_vec[i].str().c_str());
                             printf(ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET "\n", pl.str().c_str());
+                            //TODO: Publish matched packet history
+                            bool ret = s_sendmore(pub_sock, filter_vec[i].str());
                         }
                     }
                 }
