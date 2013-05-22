@@ -100,6 +100,9 @@ make
 sudo make install
 cd ~/
 
+echo "Installing libpci-dev"
+sudo aptitude install -y libpci-dev
+
 echo "Installing flex"
 sudo aptitude install -y flex
 

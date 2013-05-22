@@ -16,6 +16,7 @@ Dependencies:
 - MongoDB + deps: mongodb, pymongo, bson, libmongo-client-dev
 - Boost: libboost-all-dev 
 - libpcap: libpcap-dev 
+- libpci: libpci-dev
 - dpkt
 - gdb
 - scons
