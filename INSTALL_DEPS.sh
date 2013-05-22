@@ -98,6 +98,7 @@ cd libcrafter/libcrafter
 ./configure
 make
 sudo make install
+ldconfig
 cd ~/
 
 echo "Installing libpci-dev"
