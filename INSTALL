@@ -28,3 +28,8 @@ Additional dependencies for Mininet-based demo:
 - POX
 - RipL/RipL-POX
 - GNU Screen
+
+To run the unit tests:
+======================
+$ cd ~/netsight/
+$ ./netsight/test/test_netsight
