@@ -74,10 +74,16 @@ s_recv_envelope(zmq::socket_t &socket, std::string &client_id) {
 
 //  Convert string to 0MQ string and send to socket
 static bool
-s_send (zmq::socket_t & socket, const std::string & string) {
+s_send (zmq::socket_t & socket, const std::string & string, size_t size = 0) {
 
-    zmq::message_t message(string.size());
-    memcpy (message.data(), string.data(), string.size());
+    size_t msg_size = size;
+    if(size == 0) {
+        size = string.size();
+    }
+    assert(msg_size <= (string.size() + 1));
+
+    zmq::message_t message(msg_size);
+    memcpy (message.data(), string.data(), msg_size);
 
     bool rc = socket.send (message);
     return (rc);
@@ -85,10 +91,16 @@ s_send (zmq::socket_t & socket, const std::string & string) {
 
 //  Sends string as 0MQ string, as multipart non-terminal
 static bool
-s_sendmore (zmq::socket_t & socket, const std::string & string) {
+s_sendmore (zmq::socket_t & socket, const std::string & string, size_t size = 0) {
 
-    zmq::message_t message(string.size());
-    memcpy (message.data(), string.data(), string.size());
+    size_t msg_size = size;
+    if(size == 0) {
+        size = string.size();
+    }
+    assert(msg_size <= (string.size() + 1));
+
+    zmq::message_t message(msg_size);
+    memcpy (message.data(), string.data(), msg_size);
 
     bool rc = socket.send (message, ZMQ_SNDMORE);
     return (rc);
