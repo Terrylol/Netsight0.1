@@ -156,6 +156,10 @@ NDB::history_channel_thread(void *args)
 
         if(items[0].revents & ZMQ_POLLIN) {
             //TODO: Handle matching packet histories
+            string phf = s_recv(sub_sock);
+            string history_str = s_recv(sub_sock);
+            print_color(ANSI_COLOR_GREEN, "%s\n", phf.c_str());
+            print_color(ANSI_COLOR_BLUE, "%s\n\n", history_str.c_str());
         }
 
         /* Subscribe/Unsubscribe any outstanding filters */
