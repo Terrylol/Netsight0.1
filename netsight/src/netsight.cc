@@ -250,8 +250,19 @@ NetSight::run_history_worker(void *args)
                         if(filter_vec[i].match(pl)) {
                             DBG("MATCHED REGEX: %s\n", filter_vec[i].str().c_str());
                             printf(ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET "\n", pl.str().c_str());
-                            //TODO: Publish matched packet history
-                            bool ret = s_sendmore(pub_sock, filter_vec[i].str());
+                            //Publish matched packet history
+                            stringstream history_ss;
+                            history_ss << V(pl.json());
+                            bool ret = s_sendmore(pub_sock, filter_vec[i].str(), filter_vec[i].str().size() + 1);
+                            ret = s_send(pub_sock, history_ss.str());
+                            if(ret) {
+                                DBG("Published... REGEX: \"%s\"\n\tHISTORY: \"%s\"", 
+                                        filter_vec[i].str().c_str(), history_ss.str().c_str());
+                            }
+                            else {
+                                ERR("Could not publish matched packet history.\nREGEX: \"%s\"\n\tHISTORY: \"%s\"", 
+                                        filter_vec[i].str().c_str(), history_ss.str().c_str());
+                            }
                         }
                     }
                 }
