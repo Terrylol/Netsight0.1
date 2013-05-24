@@ -149,12 +149,21 @@ topo_sort(PostcardList *pl, Topology &topo)
                 EACH(nit, topo.get_neighbor_map(curr->dpid)) {
                     int nbr = nit->second;
                     // remove the postcard with dpid=nbr from locs
-                    nxt = get_next(locs, nbr);
-                    if(nxt) {
-                        curr->next = nxt;
-                        nxt->prev = curr;
-                        nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
-                        break;
+                    PostcardNode *tmp_nxt = get_next(locs, nbr);
+                    if(tmp_nxt) {
+                        curr->next = tmp_nxt;
+                        tmp_nxt->prev = curr;
+                        tmp_nxt->inport = topo.get_ports(curr->dpid, tmp_nxt->dpid).second;
+                        // ensure that we're not going in the reverse direction
+                        if(tmp_nxt->outport != topo.get_ports(tmp_nxt->dpid, curr->dpid).first) {
+                            nxt = tmp_nxt;
+                            break;
+                        }
+                        else {
+                            // if we are put tmp_nxt back into locs
+                            vector<PostcardNode*>::iterator it = (locs[tmp_nxt->dpid]).begin();
+                            (locs[tmp_nxt->dpid]).insert(it, tmp_nxt);
+                        }
                     }
                 }
             }
