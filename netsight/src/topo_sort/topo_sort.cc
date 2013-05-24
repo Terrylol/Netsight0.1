@@ -122,6 +122,8 @@ topo_sort(PostcardList *pl, Topology &topo)
     DBG("Topo-sorting:\n%s\n", pl->str().c_str());
 
     // populate locs
+    DBG("PostcardList pl size: %d\n", pl->length);
+    DBG("Populating locs datastructure\n");
     PostcardNode *curr = pl->head;
     while(curr != NULL) {
         (locs[curr->dpid]).push_back(curr);
@@ -131,10 +133,14 @@ topo_sort(PostcardList *pl, Topology &topo)
     }
 
     //reset the fields of pl
+    DBG("locs size: %d\n", locs.size());
+    DBG("Resetting the fields of pl\n");
     pl->head = pl->tail = NULL;
     pl->length = 0;
     curr = NULL;
     while((curr = get_next(locs)) != NULL) {
+        DBG("Current size of locs: %d\n", locs.size());
+        DBG("curr->dpid = %d\n", curr->dpid);
         PostcardList tmp_pl;
         while(curr != NULL) {
             tmp_pl.push_back(curr);
@@ -142,6 +148,7 @@ topo_sort(PostcardList *pl, Topology &topo)
             if(curr->outport == OFPP_FLOOD) {
                 EACH(nit, topo.get_neighbor_map(curr->dpid)) {
                     int nbr = nit->second;
+                    // remove the postcard with dpid=nbr from locs
                     nxt = get_next(locs, nbr);
                     if(nxt) {
                         curr->next = nxt;
@@ -154,16 +161,20 @@ topo_sort(PostcardList *pl, Topology &topo)
             else {
                 int nbr = topo.get_neighbor(curr->dpid, curr->outport);
                 if(nbr) {
+                    // remove the postcard with dpid=nbr from locs
                     nxt = get_next(locs, nbr);
-                    curr->next = nxt;
-                    nxt->prev = curr;
-                    nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
+                    if(nxt) {
+                        curr->next = nxt;
+                        nxt->prev = curr;
+                        nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
+                    }
                 }
             }
             curr = nxt;
         }
         
         //prepend tmp_pl to pl
+        DBG("Prepending tmp_pl to pl:\n%s\n", tmp_pl.str().c_str());
         if(pl->head) {
             if(tmp_pl.tail) {
                 tmp_pl.tail->next = pl->head;
@@ -179,6 +190,7 @@ topo_sort(PostcardList *pl, Topology &topo)
             pl->tail = tmp_pl.tail;
         }
         pl->length += tmp_pl.length;
+        DBG("End of iteration: PL length: %d\n", pl->length);
     }
 
     DBG("Done Topo-sorting:\n%s\n", pl->str().c_str());
