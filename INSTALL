@@ -4,8 +4,13 @@ Installing NetSight on a Ubuntu 12.10 VM:
 Install all the dependencies:
 $ ./INSTALL_DEPS.sh
 
-Compile NetSight code:
+Compile NetSight code in debug mode:
 $ scons --dbg
+
+This allows you to run NetSight with gdb.
+
+Or, compile NetSight code in normal mode:
+$ scons
 
 Dependencies:
 =============
