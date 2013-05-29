@@ -34,6 +34,7 @@ NDB::control_channel_thread(void *args)
     zmq::socket_t req_sock(n.context, ZMQ_DEALER);
     // Set random ID to the socket
     string req_sock_id = s_set_id(req_sock);
+    DBG("Setting the client id as \"%s\"\n", req_sock_id.c_str());
     //  Configure socket to not wait at close time
     int linger = 0;
     req_sock.setsockopt (ZMQ_LINGER, &linger, sizeof(linger));
@@ -67,13 +68,13 @@ NDB::control_channel_thread(void *args)
             if(msg_type == ECHO_REPLY) {
                 DBG("Received ECHO_REPLY message with data: %s\n", msg_data.c_str());
             }
-            if(msg_type == ADD_FILTER_REPLY) {
+            else if(msg_type == ADD_FILTER_REPLY) {
                 DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.c_str());
             }
-            if(msg_type == DELETE_FILTER_REPLY) {
+            else if(msg_type == DELETE_FILTER_REPLY) {
                 DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.c_str());
             }
-            if(msg_type == GET_FILTERS_REPLY) {
+            else if(msg_type == GET_FILTERS_REPLY) {
                 DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.c_str());
                 string &filters_str = msg_data;
                 stringstream ss(filters_str);
