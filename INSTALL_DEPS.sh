@@ -110,4 +110,15 @@ sudo aptitude install -y flex
 echo "Installing bison"
 sudo aptitude install -y bison
 
+echo "Removing network-manager to avoid spurious DHCP requests"
+sudo apt-get remove -y network-manager
+
+echo "Enabling auto DCHP on the primary interface eth0"
+grep -Pzq 'auto eth0\s*iface eth0 inet dhcp' /etc/network/interfaces || \
+    echo -e "auto eth0\niface eth0 inet dhcp"
+
+echo "Enabling auto DCHP on the primary interface eth1"
+grep -Pzq 'auto eth1\s*iface eth1 inet dhcp' /etc/network/interfaces || \
+    echo -e "auto eth1\niface eth1 inet dhcp"
+
 cd $START_DIR
