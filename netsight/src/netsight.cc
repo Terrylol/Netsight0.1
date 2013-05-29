@@ -19,9 +19,7 @@ static int SKIP_ETHERNET = 0;
 using namespace std;
 
 NetSight::NetSight():
-    context(1), 
-    pub_sock(context, ZMQ_PUB), 
-    rep_sock(context, ZMQ_ROUTER)
+    context(1)
 {
     /* Database handler initialization */
     topo_db.set_db("ndb");
@@ -95,6 +93,7 @@ NetSight::interact()
 void
 NetSight::serve()
 {
+    zmq::socket_t rep_sock(context, ZMQ_ROUTER);
     int linger = 0;
     stringstream rep_ss;
     rep_ss << "tcp://*:" << NETSIGHT_CONTROL_PORT;
@@ -111,11 +110,12 @@ NetSight::serve()
             DBG("Received message on the control channel...\n");
             string client_id;
             string message_str = s_recv_envelope(rep_sock, client_id);
+            DBG("client_id: %s\n", client_id.c_str());
             DBG("message_str: %s\n", message_str.c_str());
             stringstream ss(message_str);
             picojson::value message_j;
-            string err = picojson::parse(message_j, ss);
-            MessageType msg_type = (MessageType) message_j.get("type").get<double>(); 
+            ss >> message_j;
+            MessageType msg_type = (MessageType) (message_j.get("type").get<double>()); 
             string msg_data = message_j.get("data").get<string>();
             DBG("msg_type: %d, msg_data: %s\n", msg_type, msg_data.c_str());
 
@@ -198,6 +198,7 @@ NetSight::history_worker(void *args)
 void*
 NetSight::run_history_worker(void *args)
 {
+    zmq::socket_t pub_sock(context, ZMQ_PUB);
     stringstream pub_ss;
     int linger = 0;
     pub_ss << "tcp://*:" << NETSIGHT_HISTORY_PORT;

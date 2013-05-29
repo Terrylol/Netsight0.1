@@ -51,8 +51,6 @@ class NetSight {
 
         /* API Sockets */
         zmq::context_t context;
-        zmq::socket_t pub_sock;
-        zmq::socket_t rep_sock;
         bool s_interrupted;
 
         /* Signals that are handled by various threads */
