@@ -78,7 +78,7 @@ s_send (zmq::socket_t & socket, const std::string & string, size_t size = 0) {
 
     size_t msg_size = size;
     if(size == 0) {
-        size = string.size();
+        msg_size = string.size();
     }
     assert(msg_size <= (string.size() + 1));
 
@@ -95,7 +95,7 @@ s_sendmore (zmq::socket_t & socket, const std::string & string, size_t size = 0)
 
     size_t msg_size = size;
     if(size == 0) {
-        size = string.size();
+        msg_size = string.size();
     }
     assert(msg_size <= (string.size() + 1));
 
