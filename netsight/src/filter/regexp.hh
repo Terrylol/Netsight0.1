@@ -181,6 +181,9 @@ class PacketHistoryFilter {
         void compile_(char *regex)
         {
             re = parse(regex);
+            if(!re) {
+                return;
+            }
             parse_postcard_filters(re);
             prog = compile(re);
             memset(sub, 0, sizeof sub);
@@ -192,6 +195,16 @@ class PacketHistoryFilter {
             DBG("PHF:\"%s\"\n", regex);
             DBG("Packet History:\n%s\n", pl.str().c_str());
             return match_fn(prog, pl.head, sub, nelem(sub));
+        }
+
+        Regexp *get_re()
+        {
+            return re;
+        }
+
+        bool is_valid()
+        {
+            return (get_re() != NULL);
         }
 };
 

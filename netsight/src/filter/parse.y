@@ -174,10 +174,15 @@ parse(char *s)
 	parsed_regexp = (Regexp *)nil;
 	nparen = 0;
 	if(yyparse() != 1) {
-		yyerror("did not parse");
-        }
-	if(parsed_regexp == nil)
-		yyerror("parser nil");
+		//yyerror("did not parse");
+        ERR("Error parsing regex \"%s\"\n", s);
+        return NULL;
+    }
+	if(parsed_regexp == nil) {
+		//yyerror("parser nil");
+        ERR("Error: Parsed regex is nil: \"%s\"\n", s);
+        return NULL;
+    }
 
 	r = reg(Paren, parsed_regexp, (Regexp *)nil);	// $0 parens
 	dotstar = reg(Star, reg(Dot, (Regexp *)nil, (Regexp *)nil), (Regexp *)nil);
