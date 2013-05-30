@@ -124,7 +124,6 @@ NetSight::serve()
                 filters[client_id].filter_vec = vector<PacketHistoryFilter>();
             }
 
-            /* variables need to be initialized before switch statement */
             if(msg_type == ECHO_REQUEST) {
                 DBG("Received ECHO_REQUEST message\n");
                 DBG("Sending ECHO_REPLY message\n");
@@ -133,24 +132,25 @@ NetSight::serve()
             }
             else if (msg_type == ADD_FILTER_REQUEST) {
                 DBG("Received ADD_FILTER_REQUEST message\n");
-                PacketHistoryFilter phf(message_str.c_str());
+                PacketHistoryFilter phf(msg_data.c_str());
+                DBG("Created a PHF object for \"%s\"\n", phf.str().c_str());
                 (filters[client_id].filter_vec).push_back(phf);
-                printf("Added filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
-                AddFilterReplyMessage af_rep_msg(message_str, true);
+                printf("Added filter: \"%s\", from client: %s\n", msg_data.c_str(), client_id.c_str());
+                AddFilterReplyMessage af_rep_msg(msg_data, true);
                 s_send_envelope(rep_sock, client_id, af_rep_msg.serialize());
             }
             else if (msg_type == DELETE_FILTER_REQUEST) {
                 DBG("Received DELETE_FILTER_REQUEST message\n");
-                vector<PacketHistoryFilter>::iterator it = find((filters[client_id]).filter_vec.begin(), (filters[client_id]).filter_vec.end(), message_str.c_str());
+                vector<PacketHistoryFilter>::iterator it = find((filters[client_id]).filter_vec.begin(), (filters[client_id]).filter_vec.end(), msg_data.c_str());
                 if(it != (filters[client_id]).filter_vec.end()) {
-                    printf("Deleted filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
+                    printf("Deleted filter: \"%s\", from client: %s\n", msg_data.c_str(), client_id.c_str());
                     (filters[client_id]).filter_vec.erase(it);
-                    DeleteFilterReplyMessage df_rep_msg(message_str, true);
+                    DeleteFilterReplyMessage df_rep_msg(msg_data, true);
                     s_send_envelope(rep_sock, client_id, df_rep_msg.serialize());
                 }
                 else {
-                    ERR("Could not find filter: \"%s\", from client: %s\n", message_str.c_str(), client_id.c_str());
-                    DeleteFilterReplyMessage df_rep_msg(message_str, false);
+                    ERR("Could not find filter: \"%s\", from client: %s\n", msg_data.c_str(), client_id.c_str());
+                    DeleteFilterReplyMessage df_rep_msg(msg_data, false);
                     s_send_envelope(rep_sock, client_id, df_rep_msg.serialize());
                 }
             }
@@ -250,7 +250,7 @@ NetSight::run_history_worker(void *args)
                     for(int i = 0; i < filter_vec.size(); i++) {
                         if(filter_vec[i].match(pl)) {
                             DBG("MATCHED REGEX: %s\n", filter_vec[i].str().c_str());
-                            printf(ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET "\n", pl.str().c_str());
+                            print_color(ANSI_COLOR_BLUE, "%s\n", pl.str().c_str());
                             //Publish matched packet history
                             stringstream history_ss;
                             history_ss << V(pl.json());
