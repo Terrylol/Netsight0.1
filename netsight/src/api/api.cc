@@ -22,7 +22,8 @@ void unsubscribe_filter(string &filter, zmq::socket_t &sub_sock)
 bool add_filter_noblock(string filter, zmq::socket_t &ctrl_sock)
 {
     AddFilterRequestMessage msg(filter);
-    bool ret = s_send(ctrl_sock, msg.serialize());
+    bool ret = s_sendmore(ctrl_sock, "");
+    ret &= s_send(ctrl_sock, msg.serialize());
     return ret;
 }
 
@@ -32,7 +33,8 @@ bool add_filter_noblock(string filter, zmq::socket_t &ctrl_sock)
 bool delete_filter_noblock(string filter, zmq::socket_t &ctrl_sock)
 {
     DeleteFilterRequestMessage msg(filter);
-    bool ret = s_send(ctrl_sock, msg.serialize());
+    bool ret = s_sendmore(ctrl_sock, "");
+    ret &= s_send(ctrl_sock, msg.serialize());
     return ret;
 }
 
@@ -43,6 +45,7 @@ bool get_filters_noblock(zmq::socket_t &ctrl_sock)
 {
     vector<string> filters;
     GetFiltersRequestMessage req_msg;
-    bool ret = s_send(ctrl_sock, req_msg.serialize());
+    bool ret = s_sendmore(ctrl_sock, "");
+    ret &= s_send(ctrl_sock, req_msg.serialize());
     return ret;
 }
