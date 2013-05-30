@@ -59,28 +59,25 @@ NDB::control_channel_thread(void *args)
             string message_str = s_recv(req_sock);
             assert(message_str.empty());
             message_str = s_recv(req_sock);
+
             stringstream ss(message_str);
-            picojson::value message_j, filters_j;
-            string err = picojson::parse(message_j, ss);
+            picojson::value message_j;
+            ss >> message_j;
             MessageType msg_type = (MessageType) message_j.get("type").get<double>();
-            string msg_data = message_j.get("data").get<string>();
+            picojson::value msg_data = message_j.get("data");
 
             if(msg_type == ECHO_REPLY) {
-                DBG("Received ECHO_REPLY message with data: %s\n", msg_data.c_str());
+                DBG("Received ECHO_REPLY message with data: %s\n", msg_data.serialize().c_str());
             }
             else if(msg_type == ADD_FILTER_REPLY) {
-                DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+                DBG("Received ADD_FILTER_REPLY message with data: %s\n", msg_data.serialize().c_str());
             }
             else if(msg_type == DELETE_FILTER_REPLY) {
-                DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.c_str());
+                DBG("Received DELETE_FILTER_REPLY message with data: %s\n", msg_data.serialize().c_str());
             }
             else if(msg_type == GET_FILTERS_REPLY) {
-                DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.c_str());
-                string &filters_str = msg_data;
-                stringstream ss(filters_str);
-                picojson::value filters_j;
-                string err = picojson::parse(filters_j, ss);
-                picojson::array &filters_list = filters_j.get<picojson::array>();
+                DBG("Received GET_FILTERS_REPLY message with data: %s\n", msg_data.serialize().c_str());
+                picojson::array &filters_list = msg_data.get<picojson::array>();
                 for (picojson::array::iterator iter = filters_list.begin(); iter != filters_list.end(); ++iter) {
                     string f = (*iter).get<string>();
                     print_color(ANSI_COLOR_BLUE, "\t\"%s\"\n", f.c_str());
@@ -98,12 +95,15 @@ NDB::control_channel_thread(void *args)
                 string &cmd = n.ctrl_cmd_queue[i][0];
                 string &arg = n.ctrl_cmd_queue[i][1];
                 if(cmd == "add") {
+                    DBG("Adding filter: \"%s\"\n", arg.c_str());
                     add_filter_noblock(arg, req_sock);
                 }
                 else if(cmd == "del") {
+                    DBG("Deleting filter: \"%s\"\n", arg.c_str());
                     delete_filter_noblock(arg, req_sock);
                 }
                 else if(cmd == "list") {
+                    DBG("Listing filters...\n");
                     get_filters_noblock(req_sock);
                 }
             }
@@ -239,9 +239,10 @@ NDB::interact()
                 ERR("Incomplete command: \"%s\"\n", input.c_str());
                 continue;
             }
-            string arg = input.substr(command_pos + 1);
+            arg = input.substr(command_pos + 1);
             int last_arg_char = arg.size() - 1;
-            if((arg[0] == '\"' and arg[last_arg_char] == '\"') or (arg[0] == '\'' and arg[last_arg_char] == '\'')) {
+            if((arg[0] == '\"' && arg[last_arg_char] == '\"') 
+                    || (arg[0] == '\'' && arg[last_arg_char] == '\'')) {
                 arg = arg.substr(1, arg.size() - 2);
             }
             /*else {
