@@ -65,6 +65,27 @@ PostcardNode::json()
     return j;
 }
 
+PostcardNode *
+PostcardNode::decode_json(picojson::value &pn_j)
+{
+    picojson::value pkt_j = pn_j.get("packet");
+    string pkt_hex = pkt_j.get("buff").get<string>();
+    size_t pkt_bufsize;
+    u8 *pkt_buf = (u8*) malloc(pkt_hex.size()/2);
+    bzero(pkt_buf, sizeof(pkt_buf));
+    byteify_packet(pkt_hex.data(), pkt_buf, &pkt_bufsize);
+
+    Packet *pkt = new Packet(pkt_buf, pkt_bufsize, 0, 0, pkt_bufsize, true);
+    PostcardNode *pn = new PostcardNode(pkt);
+    pn->dpid = (int) (pn_j.get("dpid").get<double>());
+    pn->inport = (int) (pn_j.get("inport").get<double>());
+    pn->dpid = (int) (pn_j.get("outport").get<double>());
+    pn->version = (int) (pn_j.get("version").get<double>());
+
+    free(pkt_buf);
+    return pn;
+}
+
 /*
  * insert p after loc
  * if loc is NULL, insert at the head of the list
@@ -158,3 +179,16 @@ PostcardList::json()
     j["postcard_list"] = V(v);
     return j;
 }
+
+PostcardList *
+PostcardList::decode_json(picojson::value &message_j)
+{
+    PostcardList *pl = new PostcardList();
+    picojson::value pl_j = message_j.get("postcard_list");
+    picojson::array &pl_j_vec = pl_j.get<picojson::array>();
+    for (picojson::array::iterator iter = pl_j_vec.begin(); iter != pl_j_vec.end(); ++iter) {
+        pl->push_back(PostcardNode::decode_json(*iter));
+    }
+    return pl;
+}
+

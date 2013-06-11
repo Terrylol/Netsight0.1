@@ -363,22 +363,8 @@ Packet::Packet(const u8 *pkt, u32 sz, int skip_ethernet, u32 packet_number, int 
 string
 Packet::str_hex() 
 {
-    char pkt_hex[1500];
-    int i;
-    assert(size <= MAX_PKT_SIZE);
-    for (i = 0; i < size; i++) {
-        if (i % 16 == 0)
-            sprintf(pkt_hex, "%04x ", i);
-        if (buff[i] < 16)
-            sprintf(pkt_hex, "0");
-        sprintf(pkt_hex, "%x ", (u8) buff[i]);
-        if ((i + 1) % 8 == 0)
-            sprintf(pkt_hex, " ");
-        if ((i + 1) % 16 == 0)
-            sprintf(pkt_hex, "\n");
-    }
-    if (size % 16 != 0)
-        sprintf(pkt_hex, "\n");
+    char *pkt_hex = (char *) malloc(size*2 + 1);
+    hexify_packet(buff, pkt_hex, size);
     return string(pkt_hex);
 }
 

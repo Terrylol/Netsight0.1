@@ -33,6 +33,7 @@ class PostcardNode {
         int get_version();
         string str();
         JSON json();
+        static PostcardNode *decode_json(picojson::value &pn_j);
 };
 
 class PostcardList {
@@ -67,6 +68,7 @@ class PostcardList {
         void clear();
         string str();
         JSON json();
+        static PostcardList *decode_json(picojson::value &message_j);
 };
 
 #endif //POSTCARD_LIST_HH
