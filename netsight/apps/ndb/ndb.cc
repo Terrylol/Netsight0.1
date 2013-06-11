@@ -156,11 +156,15 @@ NDB::history_channel_thread(void *args)
         zmq::poll (&items[0], 1, HEARTBEAT_INTERVAL * 1000);
 
         if(items[0].revents & ZMQ_POLLIN) {
-            //TODO: Handle matching packet histories
             string phf = s_recv(sub_sock);
             string history_str = s_recv(sub_sock);
+            stringstream history_ss(history_str);
+            picojson::value history_j;
+            history_ss >> history_j;
+            PostcardList *pl = PostcardList::decode_json(history_j);
             print_color(ANSI_COLOR_GREEN, "%s\n", phf.c_str());
-            print_color(ANSI_COLOR_BLUE, "%s\n\n", history_str.c_str());
+            print_color(ANSI_COLOR_MAGENTA, "%s\n\n", history_str.c_str());
+            print_color(ANSI_COLOR_BLUE, "%s\n\n", pl->str().c_str());
         }
 
         /* Subscribe/Unsubscribe any outstanding filters */
