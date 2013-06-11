@@ -121,10 +121,12 @@ void byteify_packet(const char *hex, u8 *bytes, size_t *buflen)
 
     while (*hex) {
         count++;
-        if (*hex <= '9')
+        if (*hex <= '9') {
             *bytes = (*bytes * 16) + (*hex - '0');
-        else
+        }
+        else {
             *bytes = (*bytes * 16) + (*hex - 'a' + 10);
+        }
 
         if (count == 2) {
             count = 0;
