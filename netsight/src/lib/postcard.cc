@@ -152,6 +152,7 @@ PostcardList::json()
     PostcardNode *pn = head;
     while(pn) {
         v.push_back(V(pn->json()));
+        pn = pn->next;
     }
 
     j["postcard_list"] = V(v);
