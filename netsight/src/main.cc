@@ -44,6 +44,6 @@ main(int argc, char **argv)
     NetSight &n= NetSight::get_instance();
     parse_args(argc, argv, n);
     n.start();
-
+    DBG("Bye!\n");
     return 0;
 }
