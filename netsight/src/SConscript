@@ -6,7 +6,7 @@ if debug:
     env.Append(CCFLAGS='-g')
     env.Append(CPPDEFINES='DEBUG')
 
-src_files = ['main.cc', 'netsight.cc', 'path_table.cc', 'db_handler.cc']
+src_files = ['main.cc', 'netsight.cc', 'path_table.cc']
 
 lib_deps = []
 lib_paths = []

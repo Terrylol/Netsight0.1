@@ -1,4 +1,8 @@
 Import('env')
 
-src_files = ['flow.cc', 'packet.cc', 'postcard.cc', 'helper.cc']
-env.StaticLibrary(target='netsightlib', source=src_files)
+src_files = ['flow.cc', 'packet.cc', 'postcard.cc', 'helper.cc', 'db_handler.cc']
+lib_deps = ['mongoclient', 'boost_thread-mt', 'boost_filesystem', 
+         'boost_program_options', 'boost_system']
+
+env.StaticLibrary(target='netsightlib', source=src_files,
+            LIBS=lib_deps)
