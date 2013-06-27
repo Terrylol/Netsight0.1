@@ -89,7 +89,7 @@ PostcardNode::decode_json(picojson::value &pn_j)
     DBG("Creating PostcardNode object:\n");
     pn->dpid = (int) pn_j.get("dpid").get<double>();
     pn->inport = (int) pn_j.get("inport").get<double>();
-    pn->dpid = (int) pn_j.get("outport").get<double>();
+    pn->outport = (int) pn_j.get("outport").get<double>();
     pn->version = (int) pn_j.get("version").get<double>();
 
     // Free packet buffer
