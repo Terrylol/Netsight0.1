@@ -105,7 +105,13 @@ NetSight::serve()
     };
 
     while(!s_interrupted) {
-        zmq::poll(&items [0], 1, HEARTBEAT_INTERVAL * 1000);
+        try {
+            zmq::poll(&items [0], 1, HEARTBEAT_INTERVAL * 1000);
+        }
+        catch (zmq::error_t e) {
+            DBG("Main serve thread interrupted: returning\n");
+            break;
+        }
         if(items[0].revents & ZMQ_POLLIN) {
             DBG("Received message on the control channel...\n");
             string client_id;
@@ -172,6 +178,7 @@ NetSight::serve()
 
         /* Handle timeouts */
     }
+    return;
 }
 
 void *
@@ -350,11 +357,14 @@ NetSight::cleanup()
     pthread_cancel(postcard_t);
     pthread_cancel(history_t);
     pthread_join(postcard_t, &ret);
+    DBG("Postcard thread joined\n");
     pthread_join(history_t, &ret);
+    DBG("History thread joined\n");
 
     pcap_freecode(&postcard_fp);
-    if(postcard_handle)
+    if(postcard_handle) {
         pcap_close(postcard_handle);
+    }
 
     DBG("\nCleanup complete.\n");
 }
@@ -392,7 +402,6 @@ NetSight::sig_handler(int signum)
             DBG("Got SIGINT\n");
             n.s_interrupted = true;
             n.cleanup();
-            exit(EXIT_SUCCESS);
             break;
         default:
             printf("Unknown signal %d\n", signum);
