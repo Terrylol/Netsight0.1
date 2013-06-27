@@ -57,10 +57,10 @@ JSON
 PostcardNode::json()
 {
     JSON j;
-    j["dpid"] = V((u64)dpid);
-    j["inport"] = V((u64)inport);
-    j["outport"] = V((u64)outport);
-    j["version"] = V((u64)version);
+    j["dpid"] = V((double)dpid);
+    j["inport"] = V((double)inport);
+    j["outport"] = V((double)outport);
+    j["version"] = V((double)version);
     j["packet"] = V(pkt->json());
     return j;
 }
@@ -68,20 +68,31 @@ PostcardNode::json()
 PostcardNode *
 PostcardNode::decode_json(picojson::value &pn_j)
 {
+    // Get packet contents from the json object
     picojson::value pkt_j = pn_j.get("packet");
     string pkt_hex = pkt_j.get("buff").get<string>();
     size_t pkt_bufsize;
+    // Allocate memory for binary format of packet data
+    // TODO: This is a wasteful process 
+    // and can be got rid of with a better
+    // PostcardNode constructor
     u8 *pkt_buf = (u8*) malloc(pkt_hex.size()/2);
     bzero(pkt_buf, sizeof(pkt_buf));
+    // Convert the packet from hex to binary
     byteify_packet(pkt_hex.data(), pkt_buf, &pkt_bufsize);
 
+    // Create a Packet object with the data
     Packet *pkt = new Packet(pkt_buf, pkt_bufsize, 0, 0, pkt_bufsize, true);
+    // Create a PostcardNode object with the packet
     PostcardNode *pn = new PostcardNode(pkt);
-    pn->dpid = (int) (pn_j.get("dpid").get<double>());
-    pn->inport = (int) (pn_j.get("inport").get<double>());
-    pn->dpid = (int) (pn_j.get("outport").get<double>());
-    pn->version = (int) (pn_j.get("version").get<double>());
+    // Populate the PostcardNode fields
+    DBG("Creating PostcardNode object:\n");
+    pn->dpid = (int) pn_j.get("dpid").get<double>();
+    pn->inport = (int) pn_j.get("inport").get<double>();
+    pn->dpid = (int) pn_j.get("outport").get<double>();
+    pn->version = (int) pn_j.get("version").get<double>();
 
+    // Free packet buffer
     free(pkt_buf);
     return pn;
 }
@@ -187,6 +198,9 @@ PostcardList::decode_json(picojson::value &message_j)
     picojson::value pl_j = message_j.get("postcard_list");
     picojson::array &pl_j_vec = pl_j.get<picojson::array>();
     for (picojson::array::iterator iter = pl_j_vec.begin(); iter != pl_j_vec.end(); ++iter) {
+        stringstream ss;
+        ss << (*iter);
+        DBG("Decoding: %s\n", ss.str().c_str());
         pl->push_back(PostcardNode::decode_json(*iter));
     }
     return pl;
