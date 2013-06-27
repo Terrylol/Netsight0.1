@@ -15,7 +15,7 @@ parse_args(int argc, char **argv, NetSight &n)
     // loop over all of the options
     int option_index = 0;
     int ch;
-    string db_host("localhost");
+    string db_host("localhost:27017");
     DBG("Parsing arguments...\n");
     while ((ch = getopt_long(argc, argv, "i:t:d:", 
                     long_options, &option_index)) != -1) {
