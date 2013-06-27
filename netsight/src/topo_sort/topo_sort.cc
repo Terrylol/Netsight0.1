@@ -188,9 +188,14 @@ topo_sort(PostcardList *pl, Topology &topo)
             if(tmp_pl.tail) {
                 tmp_pl.tail->next = pl->head;
                 pl->head->prev = tmp_pl.tail;
+                if(topo.get_neighbor((tmp_pl.tail)->dpid, (tmp_pl.tail)->outport) == (pl->head)->dpid) {
+                    //update the inport of pl->head
+                    (pl->head)->inport = topo.get_ports((tmp_pl.tail)->dpid, (pl->head)->dpid).second;
+                }
             }
-            if(tmp_pl.head) 
+            if(tmp_pl.head) {
                 pl->head = tmp_pl.head;
+            }
         }
         else {
             pl->head = tmp_pl.head;
