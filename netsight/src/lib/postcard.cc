@@ -45,8 +45,13 @@ PostcardNode::str()
     stringstream ss;
     ss << "Switch: dpid: " << dpid  << hex << "(0x" << dpid << dec << ")" << endl;
     ss << "\t" << "packet: " << pkt->str_hex() << endl;
-    ss << "\t" << "match: " << endl;
-    ss << "\t" << "action: " << endl;
+    ss << "\t" << "match: " << match << endl;
+    ss << "\t" << "actions: ";
+    EACH(action_it, actions) {
+        ss << *action_it; 
+        ss << ((std::next(action_it) != actions.end()) ? ", " : "");
+    }
+    ss << endl;
     ss << "\t" << "version: " << version << endl;
     ss << "\t" << "inport: " << inport << endl;
     ss << "\t" << "outport: " << outport << endl;

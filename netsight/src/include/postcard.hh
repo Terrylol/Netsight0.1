@@ -27,6 +27,8 @@ class PostcardNode {
         int inport;
         int outport;
         int version;
+        string match;
+        vector<string> actions; 
         PostcardNode(Packet *p);
         int get_dpid();
         int get_outport();

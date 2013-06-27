@@ -165,6 +165,11 @@ NDB::history_channel_thread(void *args)
             picojson::value history_j;
             history_ss >> history_j;
             PostcardList *pl = PostcardList::decode_json(history_j);
+            /*PostcardNode *pn = pl->head;
+            while(pn) {
+                n.get_flow_entry(pn->dpid, pn->version, pn->match, pn->actions);
+                pn = pn->next;
+            }*/
             print_color(ANSI_COLOR_GREEN, "%s\n", phf.c_str());
             print_color(ANSI_COLOR_MAGENTA, "%s\n\n", history_str.c_str());
             print_color(ANSI_COLOR_BLUE, "%s\n\n", pl->str().c_str());
