@@ -222,8 +222,9 @@ NetSight::run_history_worker(void *args)
 
         // Empty the local PostcardList and populate path_table
         PostcardNode *pn = pl.head;
-        DBG("Going to empty local PostcardList with %d postcards\n", pl.length);
-        for(int i = 0; i < pl.length; i++) {
+        int num_postcards = pl.length;
+        DBG("Going to empty local PostcardList with %d postcards\n", num_postcards);
+        for(int i = 0; i < num_postcards; i++) {
             DBG("pl.remove()\n");
             PostcardNode *next_pn = pn->next;
             PostcardNode *p = pl.remove(pn);
