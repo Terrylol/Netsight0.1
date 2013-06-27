@@ -81,6 +81,7 @@ void Topology::add_edge(int dpid1, int port1, int dpid2, int port2)
     set_neighbor(dpid1, port1, dpid2);
     set_neighbor(dpid2, port2, dpid1);
     ports[dpid1][dpid2] = make_pair(port1, port2);
+    ports[dpid2][dpid1] = make_pair(port2, port1);
 }
 
 static inline PostcardNode *get_next(unordered_map<int, vector<PostcardNode*> > &locs, int dpid=0)
@@ -148,19 +149,23 @@ topo_sort(PostcardList *pl, Topology &topo)
             if(curr->outport == OFPP_FLOOD) {
                 EACH(nit, topo.get_neighbor_map(curr->dpid)) {
                     int nbr = nit->second;
+                    DBG("Checking against neighbor %d\n", nbr);
                     // remove the postcard with dpid=nbr from locs
                     PostcardNode *tmp_nxt = get_next(locs, nbr);
                     if(tmp_nxt) {
+                        DBG("Removed nbr %d from locs\n", nbr);
                         curr->next = tmp_nxt;
                         tmp_nxt->prev = curr;
                         tmp_nxt->inport = topo.get_ports(curr->dpid, tmp_nxt->dpid).second;
                         // ensure that we're not going in the reverse direction
                         if(tmp_nxt->outport != topo.get_ports(tmp_nxt->dpid, curr->dpid).first) {
+                            DBG("%d is the next postcard\n", nbr);
                             nxt = tmp_nxt;
                             break;
                         }
                         else {
                             // if we are put tmp_nxt back into locs
+                            DBG("We were going in the reverse direction, putting %d back into locs\n", nbr);
                             vector<PostcardNode*>::iterator it = (locs[tmp_nxt->dpid]).begin();
                             (locs[tmp_nxt->dpid]).insert(it, tmp_nxt);
                         }
@@ -169,10 +174,13 @@ topo_sort(PostcardList *pl, Topology &topo)
             }
             else {
                 int nbr = topo.get_neighbor(curr->dpid, curr->outport);
+                DBG("Looking for neighbor of dpid %d, port %d, found %d\n", curr->dpid, curr->outport, nbr);
                 if(nbr) {
                     // remove the postcard with dpid=nbr from locs
+                    DBG("Removing nbr %d from locs\n", nbr);
                     nxt = get_next(locs, nbr);
                     if(nxt) {
+                        DBG("Found nbr %d in locs\n", nbr);
                         curr->next = nxt;
                         nxt->prev = curr;
                         nxt->inport = topo.get_ports(curr->dpid, nxt->dpid).second;
@@ -191,6 +199,7 @@ topo_sort(PostcardList *pl, Topology &topo)
                 if(topo.get_neighbor((tmp_pl.tail)->dpid, (tmp_pl.tail)->outport) == (pl->head)->dpid) {
                     //update the inport of pl->head
                     (pl->head)->inport = topo.get_ports((tmp_pl.tail)->dpid, (pl->head)->dpid).second;
+                    DBG("Updating inport of %d -> %d = %d\n", (tmp_pl.tail)->dpid, (pl->head)->dpid, (pl->head)->inport);
                 }
             }
             if(tmp_pl.head) {
