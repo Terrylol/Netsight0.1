@@ -11,7 +11,9 @@ lib_paths.append('#netsight/src/lib')
 lib_deps.append('netsightapi')
 lib_paths.append('#netsight/src/api')
 
-lib_deps += ['pcap', 'pthread', 'z', 'zmq']
+lib_deps += ['pcap', 'pthread', 'z', 'zmq',
+         'mongoclient', 'boost_thread-mt', 'boost_filesystem', 
+         'boost_program_options', 'boost_system']
 
 env.Program(target='ndb', source=src_files,
             LIBS=lib_deps, LIBPATH=lib_paths)

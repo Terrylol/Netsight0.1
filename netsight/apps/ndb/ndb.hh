@@ -10,6 +10,7 @@
 #include "api.hh"
 #include "helper.hh"
 #include "zhelpers.hh"
+#include "db_handler.hh"
 
 using namespace std;
 
@@ -25,6 +26,7 @@ class NDB {
         bool s_interrupted;
 
         string netsight_host;
+        MongoHandler ft_db;
 
         /* Shared datastructure and mutex between main and control threads */
         pthread_mutex_t ctrl_cmd_lock;
@@ -42,6 +44,9 @@ class NDB {
         static void *control_channel_thread(void *args);
         static void *history_channel_thread(void *args);
         void cleanup();
+        void interact();
+
+        void get_flow_entry(int dpid, int version, string &match, vector<string> &actions);
 
     public:
         static NDB &get_instance()
@@ -50,8 +55,8 @@ class NDB {
             return n;
         }
 
+        void connect_db(string host);
         void start();
-        void interact();
 };
 
 #endif // NDB_HH

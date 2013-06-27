@@ -5,6 +5,9 @@ NDB::NDB(string host):
     context(1),
     netsight_host(host)
 { 
+    ft_db.set_db("ndb");
+    ft_db.set_coll("flow-tables");
+
     sigemptyset(&sigset);
     sigaddset(&sigset, SIGINT);
 }
@@ -202,6 +205,28 @@ NDB::cleanup()
 }
 
 void 
+NDB::get_flow_entry(int dpid, int version, string &match, vector<string> &actions)
+{
+    DBG("Reading flow table entry from the DB:\n");
+    DBG("dpid:%d, version: %d\n", dpid, version);
+    mongo::BSONObjBuilder query;
+    query << "dpid" << dpid << "version" << version;
+    auto_ptr<mongo::DBClientCursor> cursor = ft_db.get_records(query.obj());
+    if(cursor->more()) {
+        mongo::BSONObj obj = cursor->next();
+        DBG("%s\n", obj.jsonString().c_str());
+        match = obj["match"].toString();
+        vector<mongo::BSONElement> action_obj = obj["action"].Array();
+        for(int i = 0; i < action_obj.size(); i++) {
+            actions.push_back(action_obj[i].toString());
+        }
+    }
+    else {
+        DBG("Error: No matching flow-entry found...\n");
+    }
+}
+
+void 
 NDB::start()
 {
     /* block out these signals 
@@ -298,3 +323,11 @@ NDB::interact()
     }
 }
 
+void 
+NDB::connect_db(string host)
+{
+    if(!ft_db.connect(host)) {
+        ERR(AT "Could not connect to MongoDB: %s\n", host.c_str());
+        exit(EXIT_FAILURE);
+    }
+}
