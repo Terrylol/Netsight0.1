@@ -49,7 +49,7 @@ namespace tut
     filtertestobject::test<2>()
     {
         set_test_name("match: .*X");
-        sprintf(regex_str, ".*{{ --bpf ip --dpid %d --outport 1 }}", chain_len);
+        sprintf(regex_str, ".*{{ --bpf ip --dpid %d --inport 2 }}", chain_len);
         PacketHistoryFilter phf(regex_str);
         int m = phf.match(*pl);
         ensure("match", m > 0);

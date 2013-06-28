@@ -11,6 +11,7 @@ PostcardList *gen_chain_pcards(int chain_len)
     int i = 0;
     for(i = 0; i < chain_len; i++) {
         int dpid = i+1;
+        int inport = 2;
         int outport = 1;
         int version = 1;
         char tag[18];
@@ -46,7 +47,9 @@ PostcardList *gen_chain_pcards(int chain_len)
 
         Packet *pkt = new Packet(tcp_packet.GetBuffer(), tcp_packet.GetSize(), 0, i, tcp_packet.GetSize());
         //printf("Adding the postcard to the PostcardList as a PostcardNode\n");
-        pl->push_back(new PostcardNode(pkt));
+        PostcardNode *pn = new PostcardNode(pkt);
+        pn->inport = inport;
+        pl->push_back(pn);
         //printf("version %d, outport %d, dpid %d\n", pl->tail->version, pl->tail->outport, pl->tail->dpid);
     }
 
