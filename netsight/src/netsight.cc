@@ -273,6 +273,9 @@ NetSight::run_history_worker(void *args)
                                         filter_vec[i].str().c_str(), history_ss.str().c_str());
                             }
                         }
+                        else {
+                            DBG("DID NOT MATCH REGEX: %s\n", filter_vec[i].str().c_str());
+                        }
                     }
                 }
                 pl.clear();
