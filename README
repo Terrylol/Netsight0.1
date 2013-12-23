@@ -1,4 +1,4 @@
-WIP: NetSight is an extensible network diagnosis platform.
+NetSight is an extensible network diagnosis platform.
 
 Code organization:
 netsight/
@@ -12,6 +12,3 @@ netsight/
     recorder/
     apps/
         ndb/
-        netwatch/
-        netshark/
-        nprof/
