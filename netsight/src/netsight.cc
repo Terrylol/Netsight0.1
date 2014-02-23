@@ -1,6 +1,11 @@
 /*
- * Source: http://www.tcpdump.org/sniffex.c
- * */
+ * Copyright 2014, Stanford University. This file is licensed under Apache 2.0,
+ * as described in included LICENSE.txt.
+ *
+ * Author: nikhilh@cs.stanford.com (Nikhil Handigol)
+ *         jvimal@stanford.edu (Vimal Jeyakumar)
+ *         brandonh@cs.stanford.edu (Brandon Heller)
+ */
 
 #include <cstdio>
 #include <vector>
