@@ -31,7 +31,7 @@ class MongoHandler(object):
 
     def connect(self, host, port):
         try:
-            self.c = pymongo.connection.Connection(host=host, port=port)
+            self.c = pymongo.Connection(host=host, port=port)
         except pymongo.errors.ConnectionFailure:
             self.logger.error('connect: Could not connect to MongoDB server (%s:%d). Flow table updates will not be logged.' % (host, port))
             pass

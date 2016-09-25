@@ -883,8 +883,8 @@ class Ndb:
         self.masters = []
         self.topo = NDBTopo(args.topo) if args.topo else None
 
-        assert args.in_band == self.topo.in_band, "The specified postcard collection type (in-band vs out-of-band) \
-                and the input topology don't match"
+        #assert args.in_band == self.topo.in_band, "The specified postcard collection type (in-band vs out-of-band) \
+         #       and the input topology don't match"
 
         waitListening(args.db_host, args.db_port)
 
